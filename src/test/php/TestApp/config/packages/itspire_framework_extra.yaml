@@ -1,0 +1,2 @@
+itspire_framework_extra:
+    allow_html_response_content_type: true
