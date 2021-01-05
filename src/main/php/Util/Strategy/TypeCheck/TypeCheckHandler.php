@@ -51,6 +51,10 @@ class TypeCheckHandler implements TypeCheckHandlerInterface
             return $value;
         }
 
+        if (in_array($value, ['', null], true) && false === $annotation->isRequired()) {
+            return $value;
+        }
+
         foreach ($this->processors as $processor) {
             if (false === $processor->supports($annotation->getType())) {
                 continue;
