@@ -170,7 +170,8 @@ abstract class AbstractParamAnnotationProcessor extends AbstractAnnotationProces
                 }
             );
         } elseif (
-            null !== $annotation->getRequirements()
+            null !== $value
+            && null !== $annotation->getRequirements()
             && !preg_match('#^(' . $annotation->getRequirements() . ')$#xs', (string) $value)
         ) {
             $this->logger->alert(

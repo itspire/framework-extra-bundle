@@ -87,4 +87,31 @@ class QueryParamProcessorTest extends TestCase
 
         static::assertEquals(1, $request->attributes->get('param'));
     }
+
+    /** @test */
+    public function processValueNotProvidedTest(): void
+    {
+        $annotation = new QueryParam(
+            ['name' => 'param', 'type' => 'int', 'required' => false, 'requirements' => '\d+']
+        );
+        $request = new Request([]);
+
+        $this->typeCheckHandlerMock
+            ->expects(static::once())
+            ->method('process')
+            ->with($annotation, $request, null)
+            ->willReturn(null);
+
+        $this->queryParamProcessor->process(
+            new ControllerEvent(
+                $this->getMockBuilder(HttpKernelInterface::class)->getMock(),
+                [new FixtureController(), 'param'],
+                $request,
+                HttpKernelInterface::MASTER_REQUEST
+            ),
+            $annotation
+        );
+
+        static::assertNull($request->attributes->get('param'));
+    }
 }
