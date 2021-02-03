@@ -73,9 +73,7 @@ abstract class AbstractParamAnnotationProcessor extends AbstractAnnotationProces
             : $annotation->getName();
 
         if ($request->{$paramValueLocation}->has($paramValueName)) {
-            return ('array' === $annotation->getType())
-                ? $request->{$paramValueLocation}->all($paramValueName)
-                : $request->{$paramValueLocation}->get($paramValueName);
+            return $request->{$paramValueLocation}->get($paramValueName);
         }
 
         return null;
