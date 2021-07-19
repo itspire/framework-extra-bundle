@@ -10,7 +10,7 @@ declare(strict_types=1);
 
 namespace Itspire\FrameworkExtraBundle\EventListener;
 
-use Itspire\Exception\Http\Definition\HttpExceptionDefinition;
+use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
 use Twig\Environment;
 

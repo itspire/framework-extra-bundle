@@ -10,13 +10,13 @@ declare(strict_types=1);
 
 namespace Itspire\FrameworkExtraBundle\Tests\Unit\EventListener;
 
+use Itspire\Common\Enum\Http\HttpMethod;
+use Itspire\Common\Enum\Http\HttpResponseStatus;
 use Itspire\Common\Enum\MimeType;
 use Itspire\Exception\Http\HttpException;
 use Itspire\FrameworkExtraBundle\Configuration\CustomRequestAttributes;
 use Itspire\FrameworkExtraBundle\EventListener\ViewListener;
 use Itspire\FrameworkExtraBundle\Tests\TestApp\Model\TestObject;
-use Itspire\Http\Common\Enum\HttpMethod;
-use Itspire\Http\Common\Enum\HttpResponseStatus;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -77,7 +77,7 @@ class ViewListenerTest extends TestCase
         $request->attributes->add(
             [
                 CustomRequestAttributes::ROUTE_CALLED => true,
-                CustomRequestAttributes::RESPONSE_STATUS_CODE => HttpResponseStatus::HTTP_OK[0],
+                CustomRequestAttributes::RESPONSE_STATUS_CODE => HttpResponseStatus::HTTP_OK,
             ]
         );
 
@@ -94,7 +94,7 @@ class ViewListenerTest extends TestCase
         /** @var BinaryFileResponse $response */
         $response = $event->getResponse();
 
-        static::assertEquals(HttpResponseStatus::HTTP_OK[0], $response->getStatusCode());
+        static::assertEquals(HttpResponseStatus::HTTP_OK, $response->getStatusCode());
         static::assertEquals($file, $response->getFile());
 
         unlink($filePath);
@@ -104,7 +104,7 @@ class ViewListenerTest extends TestCase
     public function onKernelViewSerializationErrorTest(): void
     {
         $this->expectException(HttpException::class);
-        $this->expectExceptionCode(HttpResponseStatus::HTTP_INTERNAL_SERVER_ERROR[0]);
+        $this->expectExceptionCode(HttpResponseStatus::HTTP_INTERNAL_SERVER_ERROR);
 
         $testObject = (new TestObject())->setTestProperty('test')->setTestProperty2(2);
 
@@ -138,7 +138,7 @@ class ViewListenerTest extends TestCase
     public function onKernelViewRenderErrorTest(): void
     {
         $this->expectException(HttpException::class);
-        $this->expectExceptionCode(HttpResponseStatus::HTTP_INTERNAL_SERVER_ERROR[0]);
+        $this->expectExceptionCode(HttpResponseStatus::HTTP_INTERNAL_SERVER_ERROR);
 
         $testObject = (new TestObject())->setTestProperty('test')->setTestProperty2(2);
 
@@ -244,7 +244,7 @@ class ViewListenerTest extends TestCase
 
         $this->viewListener->onKernelView($event);
 
-        static::assertEquals(HttpResponseStatus::HTTP_OK[0], $event->getResponse()->getStatusCode());
+        static::assertEquals(HttpResponseStatus::HTTP_OK, $event->getResponse()->getStatusCode());
         static::assertEquals($html, $event->getResponse()->getContent());
     }
 
@@ -294,7 +294,7 @@ class ViewListenerTest extends TestCase
 
         $this->viewListener->onKernelView($event);
 
-        static::assertEquals(HttpResponseStatus::HTTP_OK[0], $event->getResponse()->getStatusCode());
+        static::assertEquals(HttpResponseStatus::HTTP_OK, $event->getResponse()->getStatusCode());
         static::assertEquals($testJson, $event->getResponse()->getContent());
     }
 
@@ -313,6 +313,6 @@ class ViewListenerTest extends TestCase
 
         $this->viewListener->onKernelView($event);
 
-        static::assertEquals(HttpResponseStatus::HTTP_NO_CONTENT[0], $event->getResponse()->getStatusCode());
+        static::assertEquals(HttpResponseStatus::HTTP_NO_CONTENT, $event->getResponse()->getStatusCode());
     }
 }

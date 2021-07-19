@@ -10,14 +10,14 @@ declare(strict_types=1);
 
 namespace Itspire\FrameworkExtraBundle\Tests\Unit\Util\Strategy\Annotation\Processor;
 
-use Itspire\Exception\Http\Definition\HttpExceptionDefinition;
+use Itspire\Common\Enum\Http\HttpResponseStatus;
+use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
 use Itspire\FrameworkExtraBundle\Annotation\Consumes;
 use Itspire\FrameworkExtraBundle\Annotation\Route;
 use Itspire\FrameworkExtraBundle\Configuration\CustomRequestAttributes;
 use Itspire\FrameworkExtraBundle\Tests\Unit\Fixtures\FixtureController;
 use Itspire\FrameworkExtraBundle\Util\Strategy\Annotation\Processor\RouteProcessor;
-use Itspire\Http\Common\Enum\HttpResponseStatus;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -66,9 +66,11 @@ class RouteProcessorTest extends TestCase
     /** @test */
     public function processErrorTest(): void
     {
+        $exceptionDefinition = new HttpExceptionDefinition(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR);
+
         $this->expectException(HttpException::class);
-        $this->expectExceptionCode(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR[0]);
-        $this->expectExceptionMessage(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR[1]);
+        $this->expectExceptionCode($exceptionDefinition->getValue());
+        $this->expectExceptionMessage($exceptionDefinition->getDescription());
 
         $this->loggerMock
             ->expects(static::once())
@@ -105,7 +107,7 @@ class RouteProcessorTest extends TestCase
 
         static::assertTrue($request->attributes->get(CustomRequestAttributes::ROUTE_CALLED));
         static::assertEquals(
-            HttpResponseStatus::HTTP_OK[0],
+            HttpResponseStatus::HTTP_OK,
             $request->attributes->get(CustomRequestAttributes::RESPONSE_STATUS_CODE)
         );
     }

@@ -8,12 +8,12 @@
 
 declare(strict_types=1);
 
+use Itspire\Exception\Api\Adapter\ExceptionAdapterInterface;
 use Itspire\Exception\Adapter\Webservice\WebserviceExceptionApiAdapter;
 use Itspire\Exception\Adapter\Webservice\WebserviceExceptionApiAdapterInterface;
 use Itspire\Exception\Mapper\ExceptionMapperInterface;
 use Itspire\Exception\Mapper\Http\HttpExceptionMapper;
 use Itspire\Exception\Mapper\Webservice\WebserviceExceptionMapper;
-use Itspire\Exception\Resolver\ExceptionResolverInterface;
 use Itspire\Exception\Resolver\Http\HttpExceptionResolver;
 use Itspire\Exception\Resolver\Webservice\WebserviceExceptionResolver;
 use Itspire\FrameworkExtraBundle\EventListener\ControllerListener;
@@ -33,34 +33,19 @@ return static function (ContainerConfigurator $configurator) {
 
     $services->alias(WebserviceExceptionApiAdapterInterface::class, WebserviceExceptionApiAdapter::class);
 
-    $services->instanceof(ExceptionResolverInterface::class)->tag('itspire.framework_extra.exception_resolver');
+//    $services->instanceof(ExceptionMapperInterface::class)->tag('itspire.framework_extra.exception_mapper');
+//    $services->instanceof(ExceptionAdapterInterface::class)->tag('itspire.framework_extra.exception_adapter');
     $services->instanceof(AnnotationProcessorInterface::class)->tag('itspire.framework_extra.annotation_processor');
     $services->instanceof(TypeCheckProcessorInterface::class)->tag('itspire.framework_extra.type_checker_processor');
 
     $services->load(
-        'Itspire\\Exception\\Adapter\\',
-        '%kernel.project_dir%/vendor/itspire/exceptions-adapters/src/main/php/*'
-    );
-    $services->load(
-        'Itspire\\Exception\\Mapper\\',
-        '%kernel.project_dir%/vendor/itspire/exceptions-mappers/src/main/php/*'
-    );
-    $services->load(
-        'Itspire\\Exception\\Resolver\\',
-        '%kernel.project_dir%/vendor/itspire/exceptions-resolvers/src/main/php/*'
+        'Itspire\\Exception\\',
+        '%kernel.project_dir%/vendor/itspire/exceptions/src/main/php/*'
     );
 
     $services->load('Itspire\\FrameworkExtraBundle\\Util\\', '../../Util');
 
     $services->load('Itspire\\FrameworkExtraBundle\\EventListener\\', '../../EventListener');
-
-    $services
-        ->set(HttpExceptionResolver::class)
-        ->alias(ExceptionMapperInterface::class, HttpExceptionMapper::class);
-
-    $services
-        ->set(WebserviceExceptionResolver::class)
-        ->alias(ExceptionMapperInterface::class, WebserviceExceptionMapper::class);
 
     $services
         ->set(ProducesProcessor::class)
@@ -90,8 +75,12 @@ return static function (ContainerConfigurator $configurator) {
     $services
         ->set(ErrorListener::class)
         ->bind(
-            '$exceptionResolvers',
-            Configurator\tagged_iterator('itspire.framework_extra.exception_resolver')
+            '$exceptionMappers',
+            Configurator\tagged_iterator('itspire.framework_extra.exception_mapper')
+        )
+        ->bind(
+            '$exceptionAdapters',
+            Configurator\tagged_iterator('itspire.framework_extra.exception_adapter')
         )
         ->tag(
             'kernel.event_listener',

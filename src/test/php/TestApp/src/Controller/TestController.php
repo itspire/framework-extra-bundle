@@ -10,23 +10,24 @@ declare(strict_types=1);
 
 namespace Itspire\FrameworkExtraBundle\Tests\TestApp\Controller;
 
+use Itspire\Common\Enum\Http\HttpResponseStatus;
 use Itspire\Common\Enum\MimeType;
-use Itspire\Exception\Webservice\Definition\WebserviceExceptionDefinition;
+use Itspire\Exception\Definition\Webservice\WebserviceExceptionDefinition;
 use Itspire\Exception\Webservice\WebserviceException;
 use Itspire\FrameworkExtraBundle\Annotation as ItspireFrameworkExtraAnnotations;
 use Itspire\FrameworkExtraBundle\Tests\TestApp\Model\TestObject;
-use Itspire\Http\Common\Enum\HttpResponseStatus;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 class TestController extends AbstractController
 {
     /**
-     * @Route("/", name="indexTest", methods={"POST"})
+     * @Route("/", name="indexTest", methods={Request::METHOD_POST})
      *
      * @ItspireFrameworkExtraAnnotations\Consumes({MimeType::APPLICATION_XML})
      * @ItspireFrameworkExtraAnnotations\Produces({MimeType::APPLICATION_JSON})
@@ -51,13 +52,13 @@ class TestController extends AbstractController
 
         return new Response(
             json_encode($result),
-            HttpResponseStatus::HTTP_OK[0],
+            HttpResponseStatus::HTTP_OK,
             ['Content-Type' => MimeType::APPLICATION_JSON]
         );
     }
 
     /**
-     * @ItspireFrameworkExtraAnnotations\Route("/serialize", name="serializeTest", methods={"GET"})
+     * @ItspireFrameworkExtraAnnotations\Route("/serialize", name="serializeTest", methods={Request::METHOD_GET})
      * @ItspireFrameworkExtraAnnotations\Produces({MimeType::APPLICATION_XML})
      */
     public function serialize(): TestObject
@@ -68,14 +69,14 @@ class TestController extends AbstractController
         return $testObject;
     }
 
-    /** @ItspireFrameworkExtraAnnotations\Route("/regular", name="regularTest", methods={"GET"}) */
+    /** @ItspireFrameworkExtraAnnotations\Route("/regular", name="regularTest", methods={Request::METHOD_GET}) */
     public function regular(): array
     {
         return ['test'];
     }
 
     /**
-     * @ItspireFrameworkExtraAnnotations\Route("/regular2", name="regularTemplateTest", methods={"GET"})
+     * @ItspireFrameworkExtraAnnotations\Route("/regular2", name="regularTemplateTest", methods={Request::METHOD_GET})
      * @Template("@ItspireFrameworkExtra/response.html.twig")
      */
     public function regularWithTemplate(): array
@@ -84,18 +85,18 @@ class TestController extends AbstractController
     }
 
     /**
-     * @ItspireFrameworkExtraAnnotations\Route("/exception", name="exceptionTest", methods={"GET"})
+     * @ItspireFrameworkExtraAnnotations\Route("/exception", name="exceptionTest", methods={Request::METHOD_GET})
      * @ItspireFrameworkExtraAnnotations\Produces({MimeType::APPLICATION_XML, MimeType::APPLICATION_JSON})
      */
     public function exception(): void
     {
         throw new WebserviceException(
-            new WebserviceExceptionDefinition(WebserviceExceptionDefinition::TRANSFORMATION_ERROR)
+            new WebserviceExceptionDefinition(WebserviceExceptionDefinition::CONFLICT)
         );
     }
 
     /**
-     * @Route("/upload", name="uploadTest", methods={"POST"})
+     * @Route("/upload", name="uploadTest", methods={Request::METHOD_POST})
      *
      * @ItspireFrameworkExtraAnnotations\FileParam(name="fParam")
      */
@@ -106,30 +107,34 @@ class TestController extends AbstractController
         $content .= '{{' . $fParam->getClientOriginalExtension() . '}}<br/>';
         $content .= '{{' . $fParam->getSize() . '}}<br/>';
 
-        return new Response($content, HttpResponseStatus::HTTP_OK[0]);
+        return new Response($content, HttpResponseStatus::HTTP_OK);
     }
 
-    /** @ItspireFrameworkExtraAnnotations\Route("/get_file", name="getFileTest", methods={"GET"}) */
+    /** @ItspireFrameworkExtraAnnotations\Route("/get_file", name="getFileTest", methods={Request::METHOD_GET}) */
     public function getFile(): File
     {
         return new File(realpath(__DIR__ . '/../../../../resources/test.txt'));
     }
 
     /**
-     * @ItspireFrameworkExtraAnnotations\Route("/security_success", name="securitySuccessTest", methods={"GET"})
+     * @ItspireFrameworkExtraAnnotations\Route(
+     *     "/security_success",
+     *     name="securitySuccessTest",
+     *     methods={Request::METHOD_GET}
+     * )
      * @ItspireFrameworkExtraAnnotations\Security(expression="true", responseStatus=HttpResponseStatus::HTTP_FORBIDDEN)
      */
     public function securitySuccess(): Response
     {
-        return new Response('success', HttpResponseStatus::HTTP_OK[0]);
+        return new Response('success', HttpResponseStatus::HTTP_OK);
     }
 
     /**
-     * @ItspireFrameworkExtraAnnotations\Route("/security_fail", name="securityFailTest", methods={"GET"})
+     * @ItspireFrameworkExtraAnnotations\Route("/security_fail", name="securityFailTest", methods={Request::METHOD_GET})
      * @ItspireFrameworkExtraAnnotations\Security(expression="false", responseStatus=HttpResponseStatus::HTTP_FORBIDDEN)
      */
     public function securityFail(): Response
     {
-        return new Response('fail', HttpResponseStatus::HTTP_OK[0]);
+        return new Response('fail', HttpResponseStatus::HTTP_OK);
     }
 }

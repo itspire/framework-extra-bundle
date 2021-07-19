@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace Itspire\FrameworkExtraBundle\DependencyInjection;
 
+use Itspire\Exception\Api\Adapter\ExceptionAdapterInterface;
+use Itspire\Exception\Api\Mapper\ExceptionMapperInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
@@ -22,6 +24,14 @@ class ItspireFrameworkExtraExtension extends Extension
     {
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);
+
+        $container
+            ->registerForAutoconfiguration(ExceptionMapperInterface::class)
+            ->addTag('itspire.framework_extra.exception_mapper');
+
+        $container
+            ->registerForAutoconfiguration(ExceptionAdapterInterface::class)
+            ->addTag('itspire.framework_extra.exception_adapter');
 
         $container->setParameter(
             Configuration::ALLOW_HTML_RESPONSE_PARAMETER,

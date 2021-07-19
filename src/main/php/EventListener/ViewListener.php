@@ -10,12 +10,12 @@ declare(strict_types=1);
 
 namespace Itspire\FrameworkExtraBundle\EventListener;
 
+use Itspire\Common\Enum\Http\HttpMethod;
+use Itspire\Common\Enum\Http\HttpResponseStatus;
 use Itspire\Common\Enum\MimeType;
-use Itspire\Exception\Http\Definition\HttpExceptionDefinition;
+use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
 use Itspire\FrameworkExtraBundle\Configuration\CustomRequestAttributes;
-use Itspire\Http\Common\Enum\HttpMethod;
-use Itspire\Http\Common\Enum\HttpResponseStatus;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
 use Psr\Log\LoggerInterface;
@@ -142,13 +142,12 @@ class ViewListener
 
     private function getResponseStatusCode(Request $request): int
     {
-        $responseStatus = HttpResponseStatus::HTTP_OK;
         if (HttpMethod::POST === $request->getMethod()) {
-            $responseStatus = HttpResponseStatus::HTTP_CREATED;
+            return HttpResponseStatus::HTTP_CREATED;
         } elseif (HttpMethod::DELETE === $request->getMethod()) {
-            $responseStatus = HttpResponseStatus::HTTP_NO_CONTENT;
+            return HttpResponseStatus::HTTP_NO_CONTENT;
         }
 
-        return $responseStatus[0];
+        return HttpResponseStatus::HTTP_OK;
     }
 }

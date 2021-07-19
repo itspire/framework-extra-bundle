@@ -10,7 +10,7 @@ declare(strict_types=1);
 
 namespace Itspire\FrameworkExtraBundle\Tests\Unit\Util\Strategy\TypeCheck;
 
-use Itspire\Exception\Http\Definition\HttpExceptionDefinition;
+use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
 use Itspire\FrameworkExtraBundle\Annotation\QueryParam;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\Processor\IntegerProcessor;
@@ -75,9 +75,11 @@ class TypeCheckHandlerTest extends TestCase
     /** @test */
     public function processNoProcessorTest(): void
     {
+        $exceptionDefinition = new HttpExceptionDefinition(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR);
+
         $this->expectException(HttpException::class);
-        $this->expectExceptionCode(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR[0]);
-        $this->expectExceptionMessage(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR[1]);
+        $this->expectExceptionCode($exceptionDefinition->getValue());
+        $this->expectExceptionMessage($exceptionDefinition->getDescription());
 
         $annotation = new QueryParam(['name' => 'param', 'type' => 'int']);
 
@@ -102,9 +104,11 @@ class TypeCheckHandlerTest extends TestCase
     /** @test */
     public function processNoValidProcessorTest(): void
     {
+        $exceptionDefinition = new HttpExceptionDefinition(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR);
+
         $this->expectException(HttpException::class);
-        $this->expectExceptionCode(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR[0]);
-        $this->expectExceptionMessage(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR[1]);
+        $this->expectExceptionCode($exceptionDefinition->getValue());
+        $this->expectExceptionMessage($exceptionDefinition->getDescription());
 
         $annotation = new QueryParam(['name' => 'param', 'type' => 'string']);
 

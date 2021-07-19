@@ -10,9 +10,9 @@ declare(strict_types=1);
 
 namespace Itspire\FrameworkExtraBundle\Tests\Functional;
 
+use Itspire\Common\Enum\Http\HttpMethod;
+use Itspire\Common\Enum\Http\HttpResponseStatus;
 use Itspire\Common\Enum\MimeType;
-use Itspire\Http\Common\Enum\HttpMethod;
-use Itspire\Http\Common\Enum\HttpResponseStatus;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -63,7 +63,7 @@ class ControllerTest extends WebTestCase
 
         $response = $this->client->getResponse();
 
-        static::assertEquals(HttpResponseStatus::HTTP_OK[0], $response->getStatusCode());
+        static::assertEquals(HttpResponseStatus::HTTP_OK, $response->getStatusCode());
         static::assertEquals($expectedContent, $response->getContent());
     }
 
@@ -80,7 +80,7 @@ class ControllerTest extends WebTestCase
 
         $response = $this->client->getResponse();
 
-        static::assertEquals(HttpResponseStatus::HTTP_OK[0], $response->getStatusCode());
+        static::assertEquals(HttpResponseStatus::HTTP_OK, $response->getStatusCode());
         static::assertStringNotContainsString('<html lang="fr">', $response->getContent());
         static::assertStringContainsString('testObject testProperty', $response->getContent());
         static::assertStringContainsString('testing', $response->getContent());
@@ -93,7 +93,7 @@ class ControllerTest extends WebTestCase
 
         $response = $this->client->getResponse();
 
-        static::assertEquals(HttpResponseStatus::HTTP_OK[0], $response->getStatusCode());
+        static::assertEquals(HttpResponseStatus::HTTP_OK, $response->getStatusCode());
         static::assertEmpty($response->getContent());
     }
 
@@ -104,12 +104,13 @@ class ControllerTest extends WebTestCase
 
         $response = $this->client->getResponse();
 
-        static::assertEquals(HttpResponseStatus::HTTP_OK[0], $response->getStatusCode());
+        static::assertEquals(HttpResponseStatus::HTTP_OK, $response->getStatusCode());
         static::assertStringContainsString('<pre lang="json">', $response->getContent());
         static::assertStringContainsString('[&quot;test&quot;]', $response->getContent());
         static::assertStringContainsString('Symfony Web Debug Toolbar', $response->getContent());
     }
 
+    // TODO Add test exception Http
     /** @test */
     public function exceptionTest(): void
     {
@@ -123,15 +124,15 @@ class ControllerTest extends WebTestCase
 
         $expectedContent = <<<JSON
         {
-            "code": "TRANSFORMATION_ERROR",
-            "message": "itspire.exceptions.adapter_transformation_error",
+            "code": "CONFLICT",
+            "message": "itspire.exceptions.definitions.webservice.conflict",
             "details": []
         }
         JSON;
 
         $response = $this->client->getResponse();
 
-        static::assertEquals(HttpResponseStatus::HTTP_INTERNAL_SERVER_ERROR[0], $response->getStatusCode());
+        static::assertEquals(HttpResponseStatus::HTTP_CONFLICT, $response->getStatusCode());
         static::assertEquals($expectedContent, $response->getContent());
     }
 
@@ -148,10 +149,10 @@ class ControllerTest extends WebTestCase
 
         $response = $this->client->getResponse();
 
-        static::assertEquals(HttpResponseStatus::HTTP_INTERNAL_SERVER_ERROR[0], $response->getStatusCode());
+        static::assertEquals(HttpResponseStatus::HTTP_CONFLICT, $response->getStatusCode());
         static::assertStringNotContainsString('<html lang="fr">', $response->getContent());
-        static::assertStringContainsString('webservice_exception', $response->getContent());
-        static::assertStringContainsString('TRANSFORMATION_ERROR', $response->getContent());
+        static::assertStringContainsString('ws_exception', $response->getContent());
+        static::assertStringContainsString('CONFLICT', $response->getContent());
     }
 
     /** @test */
@@ -167,11 +168,11 @@ class ControllerTest extends WebTestCase
 
         $response = $this->client->getResponse();
 
-        static::assertEquals(HttpResponseStatus::HTTP_INTERNAL_SERVER_ERROR[0], $response->getStatusCode());
+        static::assertEquals(HttpResponseStatus::HTTP_CONFLICT, $response->getStatusCode());
         static::assertStringContainsString('<html lang="fr">', $response->getContent());
         static::assertStringContainsString('<pre lang="xml">', $response->getContent());
-        static::assertStringContainsString('webservice_exception', $response->getContent());
-        static::assertStringContainsString('TRANSFORMATION_ERROR', $response->getContent());
+        static::assertStringContainsString('ws_exception', $response->getContent());
+        static::assertStringContainsString('CONFLICT', $response->getContent());
         static::assertStringContainsString('Symfony Web Debug Toolbar', $response->getContent());
     }
 
@@ -188,7 +189,7 @@ class ControllerTest extends WebTestCase
 
         $response = $this->client->getResponse();
 
-        static::assertEquals(HttpResponseStatus::HTTP_OK[0], $response->getStatusCode());
+        static::assertEquals(HttpResponseStatus::HTTP_OK, $response->getStatusCode());
         static::assertEquals('File Infos :<br/>{{myTest.txt}}<br/>{{txt}}<br/>{{10}}<br/>', $response->getContent());
     }
 
@@ -202,7 +203,7 @@ class ControllerTest extends WebTestCase
         /** @var BinaryFileResponse $response */
         $response = $this->client->getResponse();
 
-        static::assertEquals(HttpResponseStatus::HTTP_OK[0], $response->getStatusCode());
+        static::assertEquals(HttpResponseStatus::HTTP_OK, $response->getStatusCode());
         static::assertEquals($expectedFile->getFileInfo(), $response->getFile()->getFileInfo());
     }
 
@@ -213,7 +214,7 @@ class ControllerTest extends WebTestCase
 
         $response = $this->client->getResponse();
 
-        static::assertEquals(HttpResponseStatus::HTTP_OK[0], $this->client->getResponse()->getStatusCode());
+        static::assertEquals(HttpResponseStatus::HTTP_OK, $this->client->getResponse()->getStatusCode());
         static::assertEquals('success', $response->getContent());
     }
 
@@ -224,7 +225,7 @@ class ControllerTest extends WebTestCase
 
         $response = $this->client->getResponse();
 
-        static::assertEquals(HttpResponseStatus::HTTP_FORBIDDEN[0], $this->client->getResponse()->getStatusCode());
-        static::assertStringContainsString(HttpResponseStatus::HTTP_FORBIDDEN[1], $response->getContent());
+        static::assertEquals(HttpResponseStatus::HTTP_FORBIDDEN, $this->client->getResponse()->getStatusCode());
+        static::assertStringContainsString((string) HttpResponseStatus::HTTP_FORBIDDEN, $response->getContent());
     }
 }

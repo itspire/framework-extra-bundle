@@ -10,7 +10,7 @@ declare(strict_types=1);
 
 namespace Itspire\FrameworkExtraBundle\Tests\Unit\Util\Strategy\Annotation\Processor;
 
-use Itspire\Exception\Http\Definition\HttpExceptionDefinition;
+use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
 use Itspire\FrameworkExtraBundle\Annotation\Consumes;
 use Itspire\FrameworkExtraBundle\Annotation\QueryParam;
@@ -50,9 +50,11 @@ class ParamProcessorTest extends TestCase
     /** @test */
     public function processUnsupportedClassTest(): void
     {
+        $exceptionDefinition = new HttpExceptionDefinition(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR);
+
         $this->expectException(HttpException::class);
-        $this->expectExceptionCode(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR[0]);
-        $this->expectExceptionMessage(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR[1]);
+        $this->expectExceptionCode($exceptionDefinition->getValue());
+        $this->expectExceptionMessage($exceptionDefinition->getDescription());
 
         $this->loggerMock
             ->expects(static::once())
@@ -75,9 +77,11 @@ class ParamProcessorTest extends TestCase
     /** @test */
     public function processSupportedClassWithParameterNameConflictTest(): void
     {
+        $exceptionDefinition = new HttpExceptionDefinition(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR);
+
         $this->expectException(HttpException::class);
-        $this->expectExceptionCode(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR[0]);
-        $this->expectExceptionMessage(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR[1]);
+        $this->expectExceptionCode($exceptionDefinition->getValue());
+        $this->expectExceptionMessage($exceptionDefinition->getDescription());
 
         $annotation = new QueryParam(['name' => 'param', 'type' => 'string', 'required' => true]);
 
@@ -108,9 +112,11 @@ class ParamProcessorTest extends TestCase
     /** @test */
     public function processSupportedClassWithParameterNotDefinedOnMethodTest(): void
     {
+        $exceptionDefinition = new HttpExceptionDefinition(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR);
+
         $this->expectException(HttpException::class);
-        $this->expectExceptionCode(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR[0]);
-        $this->expectExceptionMessage(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR[1]);
+        $this->expectExceptionCode($exceptionDefinition->getValue());
+        $this->expectExceptionMessage($exceptionDefinition->getDescription());
 
         $annotation = new QueryParam(['name' => 'param', 'type' => 'string', 'required' => true]);
 
@@ -142,9 +148,11 @@ class ParamProcessorTest extends TestCase
     /** @test */
     public function processSupportedClassWithMissingRequiredParameterTest(): void
     {
+        $exceptionDefinition = new HttpExceptionDefinition(HttpExceptionDefinition::HTTP_BAD_REQUEST);
+
         $this->expectException(HttpException::class);
-        $this->expectExceptionCode(HttpExceptionDefinition::HTTP_BAD_REQUEST[0]);
-        $this->expectExceptionMessage(HttpExceptionDefinition::HTTP_BAD_REQUEST[1]);
+        $this->expectExceptionCode($exceptionDefinition->getValue());
+        $this->expectExceptionMessage($exceptionDefinition->getDescription());
 
         $annotation = new QueryParam(['name' => 'param', 'type' => 'string', 'required' => true]);
         $request = new Request();
@@ -173,9 +181,11 @@ class ParamProcessorTest extends TestCase
     /** @test */
     public function processSupportedClassWithTypeCheckErrorTest(): void
     {
+        $exceptionDefinition = new HttpExceptionDefinition(HttpExceptionDefinition::HTTP_BAD_REQUEST);
+
         $this->expectException(HttpException::class);
-        $this->expectExceptionCode(HttpExceptionDefinition::HTTP_BAD_REQUEST[0]);
-        $this->expectExceptionMessage(HttpExceptionDefinition::HTTP_BAD_REQUEST[1]);
+        $this->expectExceptionCode($exceptionDefinition->getValue());
+        $this->expectExceptionMessage($exceptionDefinition->getDescription());
 
         $annotation = new QueryParam(['name' => 'param', 'type' => 'string', 'required' => true]);
         $request = new Request(['param' => 1]);
@@ -204,9 +214,11 @@ class ParamProcessorTest extends TestCase
     /** @test */
     public function processSupportedClassWithOverriddenTypeCheckErrorTest(): void
     {
+        $exceptionDefinition = new HttpExceptionDefinition(HttpExceptionDefinition::HTTP_BAD_REQUEST);
+
         $this->expectException(HttpException::class);
-        $this->expectExceptionCode(HttpExceptionDefinition::HTTP_BAD_REQUEST[0]);
-        $this->expectExceptionMessage(HttpExceptionDefinition::HTTP_BAD_REQUEST[1]);
+        $this->expectExceptionCode($exceptionDefinition->getValue());
+        $this->expectExceptionMessage($exceptionDefinition->getDescription());
 
         $annotation = new QueryParam(['name' => 'param', 'type' => 'string', 'required' => true]);
         $request = new Request(['param' => '1']);
@@ -235,9 +247,11 @@ class ParamProcessorTest extends TestCase
     /** @test */
     public function processSupportedClassWithRequirementsErrorTest(): void
     {
+        $exceptionDefinition = new HttpExceptionDefinition(HttpExceptionDefinition::HTTP_BAD_REQUEST);
+
         $this->expectException(HttpException::class);
-        $this->expectExceptionCode(HttpExceptionDefinition::HTTP_BAD_REQUEST[0]);
-        $this->expectExceptionMessage(HttpExceptionDefinition::HTTP_BAD_REQUEST[1]);
+        $this->expectExceptionCode($exceptionDefinition->getValue());
+        $this->expectExceptionMessage($exceptionDefinition->getDescription());
 
         $annotation = new QueryParam(
             ['name' => 'param', 'type' => 'string', 'required' => true, 'requirements' => '\d{2,}']
@@ -275,9 +289,11 @@ class ParamProcessorTest extends TestCase
     /** @test */
     public function processSupportedClassWithArrayRequirementsErrorTest(): void
     {
+        $exceptionDefinition = new HttpExceptionDefinition(HttpExceptionDefinition::HTTP_BAD_REQUEST);
+
         $this->expectException(HttpException::class);
-        $this->expectExceptionCode(HttpExceptionDefinition::HTTP_BAD_REQUEST[0]);
-        $this->expectExceptionMessage(HttpExceptionDefinition::HTTP_BAD_REQUEST[1]);
+        $this->expectExceptionCode($exceptionDefinition->getValue());
+        $this->expectExceptionMessage($exceptionDefinition->getDescription());
 
         $annotation = new QueryParam(
             ['name' => 'param', 'type' => 'array', 'required' => true, 'requirements' => '\d{2,}']

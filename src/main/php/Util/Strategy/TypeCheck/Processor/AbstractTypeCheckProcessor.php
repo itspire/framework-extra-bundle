@@ -10,7 +10,7 @@ declare(strict_types=1);
 
 namespace Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\Processor;
 
-use Itspire\Exception\Http\Definition\HttpExceptionDefinition;
+use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
 use Itspire\FrameworkExtraBundle\Annotation\ParamInterface;
 use Psr\Log\LoggerInterface;

@@ -11,7 +11,7 @@ declare(strict_types=1);
 namespace Unit\Util\Strategy\Annotation\Processor;
 
 use Itspire\Common\Enum\MimeType;
-use Itspire\Exception\Http\Definition\HttpExceptionDefinition;
+use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
 use Itspire\FrameworkExtraBundle\Annotation\BodyParam;
 use Itspire\FrameworkExtraBundle\Annotation\Produces;
@@ -64,9 +64,11 @@ class ProducesProcessorTest extends TestCase
     /** @test */
     public function processAlreadyProcessedTest(): void
     {
+        $exceptionDefinition = new HttpExceptionDefinition(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR);
+
         $this->expectException(HttpException::class);
-        $this->expectExceptionCode(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR[0]);
-        $this->expectExceptionMessage(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR[1]);
+        $this->expectExceptionCode($exceptionDefinition->getValue());
+        $this->expectExceptionMessage($exceptionDefinition->getDescription());
 
         $annotation = new Produces(['value' => MimeType::APPLICATION_XML]);
 
@@ -101,9 +103,11 @@ class ProducesProcessorTest extends TestCase
     /** @test */
     public function processUnsupportedMediaTypeTest(): void
     {
+        $exceptionDefinition = new HttpExceptionDefinition(HttpExceptionDefinition::HTTP_NOT_ACCEPTABLE);
+
         $this->expectException(HttpException::class);
-        $this->expectExceptionCode(HttpExceptionDefinition::HTTP_NOT_ACCEPTABLE[0]);
-        $this->expectExceptionMessage(HttpExceptionDefinition::HTTP_NOT_ACCEPTABLE[1]);
+        $this->expectExceptionCode($exceptionDefinition->getValue());
+        $this->expectExceptionMessage($exceptionDefinition->getDescription());
 
         $annotation = new Produces(['value' => MimeType::APPLICATION_XML]);
 

@@ -10,7 +10,7 @@ declare(strict_types=1);
 
 namespace Itspire\FrameworkExtraBundle\Util\Strategy\Annotation\Processor;
 
-use Itspire\Exception\Http\Definition\HttpExceptionDefinition;
+use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
 use Itspire\FrameworkExtraBundle\Annotation\AnnotationInterface;
 use Itspire\FrameworkExtraBundle\Annotation\BodyParam;

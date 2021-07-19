@@ -10,7 +10,7 @@ declare(strict_types=1);
 
 namespace Itspire\FrameworkExtraBundle\Tests\Unit\Util\Strategy\TypeCheck\Processor;
 
-use Itspire\Exception\Http\Definition\HttpExceptionDefinition;
+use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
 use Itspire\FrameworkExtraBundle\Annotation\QueryParam;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\Processor\ArrayProcessor;
@@ -60,9 +60,11 @@ class ArrayProcessorTest extends TestCase
     /** @test */
     public function processUnsupportedTest(): void
     {
+        $exceptionDefinition = new HttpExceptionDefinition(HttpExceptionDefinition::HTTP_BAD_REQUEST);
+
         $this->expectException(HttpException::class);
-        $this->expectExceptionCode(HttpExceptionDefinition::HTTP_BAD_REQUEST[0]);
-        $this->expectExceptionMessage(HttpExceptionDefinition::HTTP_BAD_REQUEST[1]);
+        $this->expectExceptionCode($exceptionDefinition->getValue());
+        $this->expectExceptionMessage($exceptionDefinition->getDescription());
 
         $annotation = new QueryParam(['name' => 'param']);
 

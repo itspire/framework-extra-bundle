@@ -11,11 +11,11 @@ declare(strict_types=1);
 namespace Itspire\FrameworkExtraBundle\Tests\Unit\EventListener;
 
 use Doctrine\Common\Annotations\AnnotationReader;
+use Itspire\Common\Enum\Http\HttpResponseStatus;
 use Itspire\FrameworkExtraBundle\Annotation as ItspireFrameworkExtraAnnotation;
 use Itspire\FrameworkExtraBundle\EventListener\ControllerListener;
 use Itspire\FrameworkExtraBundle\Tests\Unit\Fixtures\FixtureController;
 use Itspire\FrameworkExtraBundle\Util\Strategy\Annotation\AnnotationHandlerInterface;
-use Itspire\Http\Common\Enum\HttpResponseStatus;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\File\UploadedFile;

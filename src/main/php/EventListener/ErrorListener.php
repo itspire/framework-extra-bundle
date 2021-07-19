@@ -10,14 +10,17 @@ declare(strict_types=1);
 
 namespace Itspire\FrameworkExtraBundle\EventListener;
 
+use Itspire\Common\Enum\Http\HttpResponseStatus;
 use Itspire\Common\Enum\MimeType;
+use Itspire\Exception\Api\Model as ApiExceptionModel;
+use Itspire\Exception\Api\Adapter\ExceptionAdapterInterface;
+use Itspire\Exception\Api\Mapper\ExceptionMapperInterface;
+use Itspire\Exception\Definition\ExceptionDefinitionInterface;
 use Itspire\Exception\ExceptionInterface;
 use Itspire\Exception\Http\HttpException;
-use Itspire\Exception\Resolver\ExceptionResolverInterface;
 use Itspire\FrameworkExtraBundle\Configuration\CustomRequestAttributes;
-use Itspire\Http\Common\Enum\HttpResponseStatus;
+use JMS\Serializer\SerializerInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Bridge\PsrHttpMessage\Factory\HttpFoundationFactory;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Twig\Environment;
@@ -27,26 +30,52 @@ class ErrorListener
     use TemplateRendererTrait;
 
     private ?LoggerInterface $logger = null;
+    private ?Environment $twig = null;
+    private ?SerializerInterface $serializer = null;
 
-    /** @var ExceptionResolverInterface[]  */
-    private array $exceptionResolvers = [];
+    /** @var ExceptionMapperInterface[]  */
+    private array $exceptionMappers = [];
 
-    public function __construct(LoggerInterface $logger, Environment $twig, iterable $exceptionResolvers = [])
-    {
+    /** @var ExceptionAdapterInterface[]  */
+    private array $exceptionAdapters = [];
+
+    public function __construct(
+        LoggerInterface $logger,
+        Environment $twig,
+        SerializerInterface $serializer,
+        iterable $exceptionMappers = [],
+        iterable $exceptionAdapters = []
+    ) {
         $this->logger = $logger;
         $this->twig = $twig;
+        $this->serializer = $serializer;
 
-        foreach ($exceptionResolvers as $exceptionResolver) {
-            $this->registerResolver($exceptionResolver);
+        foreach ($exceptionMappers as $exceptionMapper) {
+            $this->registerMapper($exceptionMapper);
+        }
+
+        foreach ($exceptionAdapters as $exceptionAdapter) {
+            $this->registerAdapter($exceptionAdapter);
         }
     }
 
-    public function registerResolver(ExceptionResolverInterface $resolver): self
+    public function registerMapper(ExceptionMapperInterface $exceptionMapper): self
     {
-        $resolverClass = get_class($resolver);
+        $mapperClass = get_class($exceptionMapper);
 
-        if (false === array_key_exists($resolverClass, $this->exceptionResolvers)) {
-            $this->exceptionResolvers[$resolverClass] = $resolver;
+        if (false === array_key_exists($mapperClass, $this->exceptionMappers)) {
+            $this->exceptionMappers[$mapperClass] = $exceptionMapper;
+        }
+
+        return $this;
+    }
+
+    public function registerAdapter(ExceptionAdapterInterface $exceptionAdapter): self
+    {
+        $adapterClass = get_class($exceptionAdapter);
+
+        if (false === array_key_exists($adapterClass, $this->exceptionAdapters)) {
+            $this->exceptionAdapters[$adapterClass] = $exceptionAdapter;
         }
 
         return $this;
@@ -71,16 +100,18 @@ class ErrorListener
                     true
                 )
             ) {
-                $httpResponseStatus = new HttpResponseStatus(HttpResponseStatus::HTTP_INTERNAL_SERVER_ERROR);
+                $httpResponseStatus = $this->mapException($exception->getExceptionDefinition());
+                $apiException = $this->adaptException($exception);
 
-                $response = $this->resolveException($exception, $responseFormat);
-                $response ??= (new Response())->setStatusCode(
-                    (int) $httpResponseStatus->getValue(),
-                    $httpResponseStatus->getDescription()
-                );
+                $response = new Response('', $httpResponseStatus->getValue());
+
+                if (null !== $apiException) {
+                    $response->setContent(
+                        $this->serializer->serialize($apiException, $responseFormat)
+                    );
+                }
 
                 $response->headers->set('Content-Type', $responseContentType);
-
                 $messagePart = 'exception of type ' . get_class($exception);
 
                 try {
@@ -102,21 +133,38 @@ class ErrorListener
         }
     }
 
-    private function resolveException(ExceptionInterface $exception, string $responseFormat): ?Response
+    private function mapException(ExceptionDefinitionInterface $exceptionDefinition): HttpResponseStatus
     {
-        foreach ($this->exceptionResolvers as $exceptionResolver) {
-            if ($exceptionResolver->supports($exception)) {
-                $httpFoundationFactory = new HttpFoundationFactory();
-
-                return $httpFoundationFactory->createResponse(
-                    $exceptionResolver->resolve($exception, $responseFormat)
-                );
+        foreach ($this->exceptionMappers as $exceptionMapper) {
+            if ($exceptionMapper->supports($exceptionDefinition)) {
+                return $exceptionMapper->map($exceptionDefinition);
             }
         }
 
-        $this->logger->critical(
+        $this->logger->notice(
             sprintf(
-                'Unresolved %s exception : %d - %s.',
+                'No HttpResponseStatus mapping found for %s exception definition : %d - %s.',
+                get_class($exceptionDefinition),
+                $exceptionDefinition->getCode(),
+                $exceptionDefinition->getDescription()
+            ),
+            ['exceptionDefinition' => $exceptionDefinition]
+        );
+
+        return new HttpResponseStatus(HttpResponseStatus::HTTP_INTERNAL_SERVER_ERROR);
+    }
+
+    private function adaptException(ExceptionInterface $exception): ?ApiExceptionModel\ExceptionInterface
+    {
+        foreach ($this->exceptionAdapters as $exceptionAdapter) {
+            if ($exceptionAdapter->supports($exception)) {
+                return $exceptionAdapter->adaptBusinessExceptionToApiException($exception);
+            }
+        }
+
+        $this->logger->notice(
+            sprintf(
+                'No adapter found for %s exception : %d - %s.',
                 get_class($exception),
                 $exception->getCode(),
                 $exception->getMessage()

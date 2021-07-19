@@ -10,7 +10,7 @@ declare(strict_types=1);
 
 namespace Itspire\FrameworkExtraBundle\Annotation;
 
-use Itspire\Http\Common\Enum\HttpResponseStatus;
+use Itspire\Common\Enum\Http\HttpResponseStatus;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security as BaseSecurity;
 
 /**
@@ -19,24 +19,24 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security as BaseSecurity;
  */
 class Security extends BaseSecurity implements AnnotationInterface
 {
-    private ?array $responseStatus = null;
+    private ?HttpResponseStatus $responseStatus = null;
 
-    public function getResponseStatus(): array
+    public function getResponseStatus(): HttpResponseStatus
     {
         return $this->responseStatus;
     }
 
-    public function setResponseStatus(array $responseStatus): self
+    public function setResponseStatus(int $responseStatusCode): self
     {
-        if (!in_array($responseStatus, HttpResponseStatus::getRawValues(), true)) {
+        if (!in_array($responseStatusCode, HttpResponseStatus::getRawValues(), true)) {
             throw new \InvalidArgumentException(
                 'responseStatus should be a value from one of the constants in ' . HttpResponseStatus::class
             );
         }
 
-        $this->responseStatus = $responseStatus;
-        $this->statusCode = $responseStatus[0];
-        $this->message = $responseStatus[1];
+        $this->responseStatus = new HttpResponseStatus($responseStatusCode);
+        $this->statusCode = $this->responseStatus->getValue();
+        $this->message = $this->responseStatus->getDescription();
 
         return $this;
     }

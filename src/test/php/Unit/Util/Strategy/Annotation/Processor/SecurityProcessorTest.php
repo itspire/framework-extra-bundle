@@ -10,11 +10,11 @@ declare(strict_types=1);
 
 namespace Unit\Util\Strategy\Annotation\Processor;
 
+use Itspire\Common\Enum\Http\HttpResponseStatus;
 use Itspire\FrameworkExtraBundle\Annotation\Consumes;
 use Itspire\FrameworkExtraBundle\Annotation\Security;
 use Itspire\FrameworkExtraBundle\Tests\Unit\Fixtures\FixtureController;
 use Itspire\FrameworkExtraBundle\Util\Strategy\Annotation\Processor\SecurityProcessor;
-use Itspire\Http\Common\Enum\HttpResponseStatus;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -63,6 +63,7 @@ class SecurityProcessorTest extends TestCase
     /** @test */
     public function processTest(): void
     {
+        $httpResponseStatus = new HttpResponseStatus(HttpResponseStatus::HTTP_FORBIDDEN);
         $annotation = new Security(['expression' => false, 'responseStatus' => HttpResponseStatus::HTTP_FORBIDDEN]);
 
         $this->securityProcessor->process(
@@ -75,7 +76,7 @@ class SecurityProcessorTest extends TestCase
             $annotation
         );
 
-        static::assertEquals(HttpResponseStatus::HTTP_FORBIDDEN[0], $annotation->getStatusCode());
-        static::assertEquals(HttpResponseStatus::HTTP_FORBIDDEN[1], $annotation->getMessage());
+        static::assertEquals($httpResponseStatus->getValue(), $annotation->getStatusCode());
+        static::assertEquals($httpResponseStatus->getDescription(), $annotation->getMessage());
     }
 }

@@ -10,7 +10,8 @@ declare(strict_types=1);
 
 namespace Itspire\FrameworkExtraBundle\Tests\Unit\Util\Strategy\Annotation;
 
-use Itspire\Exception\Http\Definition\HttpExceptionDefinition;
+use Itspire\Common\Enum\Http\HttpResponseStatus;
+use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
 use Itspire\FrameworkExtraBundle\Annotation\FileParam;
 use Itspire\FrameworkExtraBundle\Annotation\Route;
@@ -20,7 +21,6 @@ use Itspire\FrameworkExtraBundle\Util\Strategy\Annotation\AnnotationHandlerInter
 use Itspire\FrameworkExtraBundle\Util\Strategy\Annotation\Processor\FileParamProcessor;
 use Itspire\FrameworkExtraBundle\Util\Strategy\Annotation\Processor\RouteProcessor;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\TypeCheckHandlerInterface;
-use Itspire\Http\Common\Enum\HttpResponseStatus;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -88,9 +88,11 @@ class AnnotationHandlerTest extends TestCase
     /** @test */
     public function processNoProcessorTest(): void
     {
+        $exceptionDefinition = new HttpExceptionDefinition(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR);
+
         $this->expectException(HttpException::class);
-        $this->expectExceptionCode(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR[0]);
-        $this->expectExceptionMessage(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR[1]);
+        $this->expectExceptionCode($exceptionDefinition->getValue());
+        $this->expectExceptionMessage($exceptionDefinition->getDescription());
 
         $annotation = new Route(['value' => '/test', 'responseStatus' => HttpResponseStatus::HTTP_OK]);
 
