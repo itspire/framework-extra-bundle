@@ -8,14 +8,6 @@
 
 declare(strict_types=1);
 
-use Itspire\Exception\Api\Adapter\ExceptionAdapterInterface;
-use Itspire\Exception\Adapter\Webservice\WebserviceExceptionApiAdapter;
-use Itspire\Exception\Adapter\Webservice\WebserviceExceptionApiAdapterInterface;
-use Itspire\Exception\Mapper\ExceptionMapperInterface;
-use Itspire\Exception\Mapper\Http\HttpExceptionMapper;
-use Itspire\Exception\Mapper\Webservice\WebserviceExceptionMapper;
-use Itspire\Exception\Resolver\Http\HttpExceptionResolver;
-use Itspire\Exception\Resolver\Webservice\WebserviceExceptionResolver;
 use Itspire\FrameworkExtraBundle\EventListener\ControllerListener;
 use Itspire\FrameworkExtraBundle\EventListener\ErrorListener;
 use Itspire\FrameworkExtraBundle\EventListener\ViewListener;
@@ -31,10 +23,6 @@ return static function (ContainerConfigurator $configurator) {
 
     $services = $configurator->services()->defaults()->autowire()->autoconfigure();
 
-    $services->alias(WebserviceExceptionApiAdapterInterface::class, WebserviceExceptionApiAdapter::class);
-
-//    $services->instanceof(ExceptionMapperInterface::class)->tag('itspire.framework_extra.exception_mapper');
-//    $services->instanceof(ExceptionAdapterInterface::class)->tag('itspire.framework_extra.exception_adapter');
     $services->instanceof(AnnotationProcessorInterface::class)->tag('itspire.framework_extra.annotation_processor');
     $services->instanceof(TypeCheckProcessorInterface::class)->tag('itspire.framework_extra.type_checker_processor');
 
@@ -75,12 +63,12 @@ return static function (ContainerConfigurator $configurator) {
     $services
         ->set(ErrorListener::class)
         ->bind(
-            '$exceptionMappers',
-            Configurator\tagged_iterator('itspire.framework_extra.exception_mapper')
+            '$exceptionApiMappers',
+            Configurator\tagged_iterator('itspire.framework_extra.exception_api_mapper')
         )
         ->bind(
-            '$exceptionAdapters',
-            Configurator\tagged_iterator('itspire.framework_extra.exception_adapter')
+            '$exceptionApiAdapters',
+            Configurator\tagged_iterator('itspire.framework_extra.exception_api_adapter')
         )
         ->tag(
             'kernel.event_listener',

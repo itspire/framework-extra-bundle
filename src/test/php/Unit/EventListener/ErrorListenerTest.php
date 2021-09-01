@@ -12,8 +12,8 @@ namespace Itspire\FrameworkExtraBundle\Tests\Unit\EventListener;
 
 use Itspire\Common\Enum\Http\HttpResponseStatus;
 use Itspire\Common\Enum\MimeType;
-use Itspire\Exception\Api\Adapter\ExceptionAdapterInterface;
-use Itspire\Exception\Api\Mapper\ExceptionMapperInterface;
+use Itspire\Exception\Api\Adapter\ExceptionApiAdapterInterface;
+use Itspire\Exception\Api\Mapper\ExceptionApiMapperInterface;
 use Itspire\Exception\Api\Model as ApiExceptionModel;
 use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Definition\Webservice\WebserviceExceptionDefinition;
@@ -48,8 +48,8 @@ class ErrorListenerTest extends TestCase
         $this->loggerMock = $this->getMockBuilder(LoggerInterface::class)->getMock();
         $this->twigMock = $this->getMockBuilder(Environment::class)->disableOriginalConstructor()->getMock();
         $this->serializerMock = $this->getMockBuilder(SerializerInterface::class)->getMock();
-        $this->exceptionMapperMock = $this->getMockBuilder(ExceptionMapperInterface::class)->getMock();
-        $this->exceptionAdapterMock = $this->getMockBuilder(ExceptionAdapterInterface::class)->getMock();
+        $this->exceptionMapperMock = $this->getMockBuilder(ExceptionApiMapperInterface::class)->getMock();
+        $this->exceptionAdapterMock = $this->getMockBuilder(ExceptionApiAdapterInterface::class)->getMock();
 
         $this->event = new ExceptionEvent(
             $this->getMockBuilder(HttpKernelInterface::class)->getMock(),
@@ -74,7 +74,7 @@ class ErrorListenerTest extends TestCase
     public function registerMapperTest(): void
     {
         $reflectionClass = new \ReflectionClass(ErrorListener::class);
-        $reflectionProperty = $reflectionClass->getProperty('exceptionMappers');
+        $reflectionProperty = $reflectionClass->getProperty('exceptionApiMappers');
         $reflectionProperty->setAccessible(true);
 
         static::assertCount(0, $reflectionProperty->getValue($this->errorListener));
@@ -90,7 +90,7 @@ class ErrorListenerTest extends TestCase
     public function registerAdapterTest(): void
     {
         $reflectionClass = new \ReflectionClass(ErrorListener::class);
-        $reflectionProperty = $reflectionClass->getProperty('exceptionAdapters');
+        $reflectionProperty = $reflectionClass->getProperty('exceptionApiAdapters');
         $reflectionProperty->setAccessible(true);
 
         static::assertCount(0, $reflectionProperty->getValue($this->errorListener));
@@ -145,18 +145,7 @@ class ErrorListenerTest extends TestCase
                 ['exceptionDefinition' => $exceptionDefinition]
             );
 
-        $this->loggerMock
-            ->expects(static::at(1))
-            ->method('notice')
-            ->with(
-                sprintf(
-                    'No adapter found for %s exception : %d - %s.',
-                    get_class($exception),
-                    $exception->getCode(),
-                    $exception->getMessage()
-                ),
-                ['exception' => $exception]
-            );
+        $this->loggerMock->expects(static::atMost(1))->method('notice');
 
         $this->errorListener->onKernelException($this->event);
 
@@ -168,6 +157,12 @@ class ErrorListenerTest extends TestCase
     /** @test */
     public function onKernelExceptionNoMatchingMapperNorAdapterTest(): void
     {
+        $this->event->setThrowable(
+            new WebserviceException(
+                new WebserviceExceptionDefinition(WebserviceExceptionDefinition::CONFLICT)
+            )
+        );
+
         $request = $this->event->getRequest();
         /** @var ExceptionInterface $exception */
         $exception = $this->event->getThrowable();
@@ -224,6 +219,12 @@ class ErrorListenerTest extends TestCase
     /** @test */
     public function onKernelExceptionHtmlRenderingErrorTest(): void
     {
+        $this->event->setThrowable(
+            new WebserviceException(
+                new WebserviceExceptionDefinition(WebserviceExceptionDefinition::CONFLICT)
+            )
+        );
+
         $request = $this->event->getRequest();
         /** @var ExceptionInterface $exception */
         $exception = $this->event->getThrowable();
@@ -235,9 +236,9 @@ class ErrorListenerTest extends TestCase
 
         $httpResponseStatus = new HttpResponseStatus(HttpResponseStatus::HTTP_FORBIDDEN);
 
-        $apiException = (new ApiExceptionModel\Exception())
-            ->setCode($httpResponseStatus->getCode())
-            ->setMessage($httpResponseStatus->getDescription());
+        $webserviceApiException = (new ApiExceptionModel\Webservice\WebserviceExceptionApi())
+            ->setCode((string) $exception->getCode())
+            ->setMessage($exception->getMessage());
 
         $this->exceptionMapperMock
             ->expects(static::at(0))
@@ -261,7 +262,7 @@ class ErrorListenerTest extends TestCase
             ->expects(static::at(1))
             ->method('adaptBusinessExceptionToApiException')
             ->with($exception)
-            ->willReturn($apiException);
+            ->willReturn($webserviceApiException);
 
         $this->twigMock
             ->expects(static::once())
@@ -291,7 +292,7 @@ class ErrorListenerTest extends TestCase
         $request->attributes->set(CustomRequestAttributes::RESPONSE_CONTENT_TYPE, MimeType::APPLICATION_XML);
         $request->attributes->set(CustomRequestAttributes::RESPONSE_FORMAT, 'xml');
 
-        $httpResponseStatus = new HttpResponseStatus(HttpResponseStatus::HTTP_FORBIDDEN);
+        $httpResponseStatus = new HttpResponseStatus(HttpResponseStatus::HTTP_CONFLICT);
 
         $this->exceptionMapperMock
             ->expects(static::at(0))
@@ -305,6 +306,12 @@ class ErrorListenerTest extends TestCase
             ->with($exceptionDefinition)
             ->willReturn($httpResponseStatus);
 
+        $this->exceptionAdapterMock
+            ->expects(static::at(0))
+            ->method('supports')
+            ->with($exception)
+            ->willReturn(false);
+
         $this->errorListener
             ->registerMapper($this->exceptionMapperMock)
             ->registerAdapter($this->exceptionAdapterMock)
@@ -312,7 +319,7 @@ class ErrorListenerTest extends TestCase
 
         $response = $this->event->getResponse();
 
-        static::assertEquals(HttpResponseStatus::HTTP_FORBIDDEN, $response->getStatusCode());
+        static::assertEquals(HttpResponseStatus::HTTP_CONFLICT, $response->getStatusCode());
     }
 
     /** @test */
@@ -335,7 +342,7 @@ class ErrorListenerTest extends TestCase
 
         $httpResponseStatus = new HttpResponseStatus(HttpResponseStatus::HTTP_CONFLICT);
 
-        $webserviceException = (new ApiExceptionModel\Webservice\WebserviceException())
+        $webserviceException = (new ApiExceptionModel\Webservice\WebserviceExceptionApi())
             ->setCode((string) $exception->getCode())
             ->setMessage($exception->getMessage());
 

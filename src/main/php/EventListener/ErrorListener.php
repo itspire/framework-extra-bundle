@@ -13,8 +13,8 @@ namespace Itspire\FrameworkExtraBundle\EventListener;
 use Itspire\Common\Enum\Http\HttpResponseStatus;
 use Itspire\Common\Enum\MimeType;
 use Itspire\Exception\Api\Model as ApiExceptionModel;
-use Itspire\Exception\Api\Adapter\ExceptionAdapterInterface;
-use Itspire\Exception\Api\Mapper\ExceptionMapperInterface;
+use Itspire\Exception\Api\Adapter\ExceptionApiAdapterInterface;
+use Itspire\Exception\Api\Mapper\ExceptionApiMapperInterface;
 use Itspire\Exception\Definition\ExceptionDefinitionInterface;
 use Itspire\Exception\ExceptionInterface;
 use Itspire\Exception\Http\HttpException;
@@ -33,49 +33,49 @@ class ErrorListener
     private ?Environment $twig = null;
     private ?SerializerInterface $serializer = null;
 
-    /** @var ExceptionMapperInterface[]  */
-    private array $exceptionMappers = [];
+    /** @var ExceptionApiMapperInterface[]  */
+    private array $exceptionApiMappers = [];
 
-    /** @var ExceptionAdapterInterface[]  */
-    private array $exceptionAdapters = [];
+    /** @var ExceptionApiAdapterInterface[]  */
+    private array $exceptionApiAdapters = [];
 
     public function __construct(
         LoggerInterface $logger,
         Environment $twig,
         SerializerInterface $serializer,
-        iterable $exceptionMappers = [],
-        iterable $exceptionAdapters = []
+        iterable $exceptionApiMappers = [],
+        iterable $exceptionApiAdapters = []
     ) {
         $this->logger = $logger;
         $this->twig = $twig;
         $this->serializer = $serializer;
 
-        foreach ($exceptionMappers as $exceptionMapper) {
-            $this->registerMapper($exceptionMapper);
+        foreach ($exceptionApiMappers as $exceptionApiMapper) {
+            $this->registerMapper($exceptionApiMapper);
         }
 
-        foreach ($exceptionAdapters as $exceptionAdapter) {
-            $this->registerAdapter($exceptionAdapter);
+        foreach ($exceptionApiAdapters as $exceptionApiAdapter) {
+            $this->registerAdapter($exceptionApiAdapter);
         }
     }
 
-    public function registerMapper(ExceptionMapperInterface $exceptionMapper): self
+    public function registerMapper(ExceptionApiMapperInterface $exceptionApiMapper): self
     {
-        $mapperClass = get_class($exceptionMapper);
+        $mapperClass = get_class($exceptionApiMapper);
 
-        if (false === array_key_exists($mapperClass, $this->exceptionMappers)) {
-            $this->exceptionMappers[$mapperClass] = $exceptionMapper;
+        if (false === array_key_exists($mapperClass, $this->exceptionApiMappers)) {
+            $this->exceptionApiMappers[$mapperClass] = $exceptionApiMapper;
         }
 
         return $this;
     }
 
-    public function registerAdapter(ExceptionAdapterInterface $exceptionAdapter): self
+    public function registerAdapter(ExceptionApiAdapterInterface $exceptionApiAdapter): self
     {
-        $adapterClass = get_class($exceptionAdapter);
+        $adapterClass = get_class($exceptionApiAdapter);
 
-        if (false === array_key_exists($adapterClass, $this->exceptionAdapters)) {
-            $this->exceptionAdapters[$adapterClass] = $exceptionAdapter;
+        if (false === array_key_exists($adapterClass, $this->exceptionApiAdapters)) {
+            $this->exceptionApiAdapters[$adapterClass] = $exceptionApiAdapter;
         }
 
         return $this;
@@ -135,9 +135,9 @@ class ErrorListener
 
     private function mapException(ExceptionDefinitionInterface $exceptionDefinition): HttpResponseStatus
     {
-        foreach ($this->exceptionMappers as $exceptionMapper) {
-            if ($exceptionMapper->supports($exceptionDefinition)) {
-                return $exceptionMapper->map($exceptionDefinition);
+        foreach ($this->exceptionApiMappers as $exceptionApiMapper) {
+            if ($exceptionApiMapper->supports($exceptionDefinition)) {
+                return $exceptionApiMapper->map($exceptionDefinition);
             }
         }
 
@@ -154,23 +154,26 @@ class ErrorListener
         return new HttpResponseStatus(HttpResponseStatus::HTTP_INTERNAL_SERVER_ERROR);
     }
 
-    private function adaptException(ExceptionInterface $exception): ?ApiExceptionModel\ExceptionInterface
+    private function adaptException(ExceptionInterface $exception): ?ApiExceptionModel\ExceptionApiInterface
     {
-        foreach ($this->exceptionAdapters as $exceptionAdapter) {
-            if ($exceptionAdapter->supports($exception)) {
-                return $exceptionAdapter->adaptBusinessExceptionToApiException($exception);
+        foreach ($this->exceptionApiAdapters as $exceptionApiAdapter) {
+            if ($exceptionApiAdapter->supports($exception)) {
+                return $exceptionApiAdapter->adaptBusinessExceptionToApiException($exception);
             }
         }
 
-        $this->logger->notice(
-            sprintf(
-                'No adapter found for %s exception : %d - %s.',
-                get_class($exception),
-                $exception->getCode(),
-                $exception->getMessage()
-            ),
-            ['exception' => $exception]
-        );
+        // Http exceptions do not require an adapter
+        if (!$exception instanceof HttpException) {
+            $this->logger->notice(
+                sprintf(
+                    'No adapter found for %s exception : %d - %s.',
+                    get_class($exception),
+                    $exception->getCode(),
+                    $exception->getMessage()
+                ),
+                ['exception' => $exception]
+            );
+        }
 
         return null;
     }
