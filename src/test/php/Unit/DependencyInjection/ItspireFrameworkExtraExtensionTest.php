@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2016 - 2020 Itspire.
+ * Copyright (c) 2016 - 2022 Itspire.
  * This software is licensed under the BSD-3-Clause license. (see LICENSE.md for full license)
  * All Right Reserved.
  */
@@ -26,11 +26,10 @@ class ItspireFrameworkExtraExtensionTest extends TestCase
     public function loadWithAllowedHtmlResponseContentTypeTest(): void
     {
         $container = $this->getContainerBuilder();
-        $extension = new ItspireFrameworkExtraExtension();
-        $extension->load($this->getConfigs(true), $container);
+        (new ItspireFrameworkExtraExtension())->load($this->getConfigs(true), $container);
 
-        static::assertTrue($container->hasParameter(Configuration::ALLOW_HTML_RESPONSE_PARAMETER));
-        static::assertTrue($container->getParameter(Configuration::ALLOW_HTML_RESPONSE_PARAMETER));
+        static::assertTrue(condition: $container->hasParameter(Configuration::ALLOW_HTML_RESPONSE_PARAMETER));
+        static::assertTrue(condition: $container->getParameter(Configuration::ALLOW_HTML_RESPONSE_PARAMETER));
     }
 
     /**
@@ -40,11 +39,10 @@ class ItspireFrameworkExtraExtensionTest extends TestCase
     public function loadWithDisallowedHtmlResponseContentTypeTest(): void
     {
         $container = $this->getContainerBuilder();
-        $extension = new ItspireFrameworkExtraExtension();
-        $extension->load($this->getConfigs(false), $container);
+        (new ItspireFrameworkExtraExtension())->load($this->getConfigs(false), $container);
 
-        static::assertTrue($container->hasParameter(Configuration::ALLOW_HTML_RESPONSE_PARAMETER));
-        static::assertFalse($container->getParameter(Configuration::ALLOW_HTML_RESPONSE_PARAMETER));
+        static::assertTrue(condition: $container->hasParameter(Configuration::ALLOW_HTML_RESPONSE_PARAMETER));
+        static::assertFalse(condition: $container->getParameter(Configuration::ALLOW_HTML_RESPONSE_PARAMETER));
     }
 
     /**
@@ -54,11 +52,10 @@ class ItspireFrameworkExtraExtensionTest extends TestCase
     public function loadWithDefaultAllowHtmlResponseContentTypeTest(): void
     {
         $container = $this->getContainerBuilder();
-        $extension = new ItspireFrameworkExtraExtension();
-        $extension->load($this->getConfigs(), $container);
+        (new ItspireFrameworkExtraExtension())->load($this->getConfigs(), $container);
 
-        static::assertTrue($container->hasParameter(Configuration::ALLOW_HTML_RESPONSE_PARAMETER));
-        static::assertFalse($container->getParameter(Configuration::ALLOW_HTML_RESPONSE_PARAMETER));
+        static::assertTrue(condition: $container->hasParameter(Configuration::ALLOW_HTML_RESPONSE_PARAMETER));
+        static::assertFalse(condition: $container->getParameter(Configuration::ALLOW_HTML_RESPONSE_PARAMETER));
     }
 
     private function getContainerBuilder(): ContainerBuilder
@@ -66,8 +63,11 @@ class ItspireFrameworkExtraExtensionTest extends TestCase
         $container = new ContainerBuilder();
         $container->setParameter('kernel.debug', true);
         $container->setParameter('kernel.project_dir', realpath(__DIR__ . '/../../../../../'));
-        $container->set('event_dispatcher', $this->getMockBuilder(EventDispatcherInterface::class)->getMock());
-        $container->set('logger', $this->getMockBuilder(LoggerInterface::class)->getMock());
+        $container->set(
+            id: 'event_dispatcher',
+            service: $this->getMockBuilder(EventDispatcherInterface::class)->getMock()
+        );
+        $container->set(id: 'logger', service: $this->getMockBuilder(LoggerInterface::class)->getMock());
 
         return $container;
     }

@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2016 - 2020 Itspire.
+ * Copyright (c) 2016 - 2022 Itspire.
  * This software is licensed under the BSD-3-Clause license. (see LICENSE.md for full license)
  * All Right Reserved.
  */
@@ -19,15 +19,15 @@ class Configuration implements ConfigurationInterface
 
     public function getConfigTreeBuilder(): TreeBuilder
     {
-        $treeBuilder = new TreeBuilder('itspire_framework_extra');
+        $treeBuilder = new TreeBuilder(name: 'itspire_framework_extra');
         $treeBuilder
             ->getRootNode()
                 ->children()
-                    ->booleanNode('allow_html_response_content_type')
+                    ->booleanNode(name: 'allow_html_response_content_type')
                     ->defaultValue(false)
                     ->validate()
-                        ->ifTrue(fn ($v) => !is_bool($v))
-                        ->thenInvalid('allow_html_response_content_type can only be true or false')
+                        ->ifTrue(fn (mixed $v): bool => !is_bool($v))
+                        ->thenInvalid(message: 'allow_html_response_content_type can only be true or false')
                     ->end()
                 ->end()
             ->end();

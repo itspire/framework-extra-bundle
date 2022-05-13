@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2016 - 2020 Itspire.
+ * Copyright (c) 2016 - 2022 Itspire.
  * This software is licensed under the BSD-3-Clause license. (see LICENSE.md for full license)
  * All Right Reserved.
  */
@@ -12,7 +12,9 @@ namespace Itspire\FrameworkExtraBundle\Tests\Unit\Util\Strategy\TypeCheck;
 
 use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
-use Itspire\FrameworkExtraBundle\Annotation\QueryParam;
+use Itspire\FrameworkExtraBundle\Annotation\QueryParam as QueryParamAnnotation;
+use Itspire\FrameworkExtraBundle\Attribute\ParamAttributeInterface;
+use Itspire\FrameworkExtraBundle\Attribute\QueryParam as QueryParamAttribute;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\Processor\IntegerProcessor;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\Processor\StringProcessor;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\TypeCheckHandler;
@@ -60,60 +62,72 @@ class TypeCheckHandlerTest extends TestCase
     public function registerProcessorTest(): void
     {
         $reflectionClass = new \ReflectionClass(TypeCheckHandler::class);
-        $reflectionProperty = $reflectionClass->getProperty('processors');
+        $reflectionProperty = $reflectionClass->getProperty(name: 'processors');
         $reflectionProperty->setAccessible(true);
 
-        static::assertCount(1, $reflectionProperty->getValue($this->typeCheckHandler));
+        static::assertCount(
+            expectedCount: 1,
+            haystack: $reflectionProperty->getValue($this->typeCheckHandler)
+        );
 
         $this->typeCheckHandler->registerProcessor($this->integerProcessorMock);
-        static::assertCount(1, $reflectionProperty->getValue($this->typeCheckHandler));
+        static::assertCount(expectedCount: 1, haystack: $reflectionProperty->getValue($this->typeCheckHandler));
 
         $this->typeCheckHandler->registerProcessor($this->stringProcessorMock);
-        static::assertCount(2, $reflectionProperty->getValue($this->typeCheckHandler));
+        static::assertCount(expectedCount: 2, haystack: $reflectionProperty->getValue($this->typeCheckHandler));
     }
 
-    /** @test */
-    public function processNoProcessorTest(): void
+    public function intAnnotationOrAttributeProvider(): array
     {
-        $exceptionDefinition = new HttpExceptionDefinition(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR);
+        return [
+            'paramAnnotation' => [new QueryParamAnnotation(name: 'param', type: 'int')],
+            'paramAttribute' => [new QueryParamAttribute(name: 'param', type: 'int')],
+        ];
+    }
+
+    /**
+     * @test
+     * @dataProvider intAnnotationOrAttributeProvider
+     */
+    public function processNoProcessorTest(ParamAttributeInterface $paramAttribute): void
+    {
+        $exceptionDefinition = HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR;
 
         $this->expectException(HttpException::class);
-        $this->expectExceptionCode($exceptionDefinition->getValue());
+        $this->expectExceptionCode($exceptionDefinition->value);
         $this->expectExceptionMessage($exceptionDefinition->getDescription());
-
-        $annotation = new QueryParam(['name' => 'param', 'type' => 'int']);
-
-        $request = new Request();
-        $request->attributes->set('_route', 'fixture');
 
         $this->loggerMock
             ->expects(static::once())
             ->method('error')
-            ->with(
-                sprintf(
-                    'No processor found to check value of expected type %s in annotation %s on route %s.',
-                    $annotation->getType(),
-                    $annotation->getName(),
-                    $request->attributes->get('_route')
-                )
-            );
+            ->with('No processor found to check expected value type "int" for param "param" on route "test".');
 
-        (new TypeCheckHandler($this->loggerMock))->process($annotation, $request, 1);
+        (new TypeCheckHandler($this->loggerMock))->process(
+            paramAttribute: $paramAttribute,
+            request: new Request(attributes: ['_route' => 'test']),
+            value: 1
+        );
     }
 
-    /** @test */
-    public function processNoValidProcessorTest(): void
+    public function stringAnnotationOrAttributeProvider(): array
     {
-        $exceptionDefinition = new HttpExceptionDefinition(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR);
+        return [
+            'paramAnnotation' => [new QueryParamAnnotation(name: 'param', type: 'string')],
+            'paramAttribute' => [new QueryParamAttribute(name: 'param', type: 'string')],
+        ];
+    }
+
+    /**
+     * @test
+     * @dataProvider stringAnnotationOrAttributeProvider
+     */
+    public function processNoValidProcessorTest(ParamAttributeInterface $paramAttribute): void
+    {
+        $exceptionDefinition = HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR;
 
         $this->expectException(HttpException::class);
-        $this->expectExceptionCode($exceptionDefinition->getValue());
+        $this->expectExceptionCode($exceptionDefinition->value);
         $this->expectExceptionMessage($exceptionDefinition->getDescription());
-
-        $annotation = new QueryParam(['name' => 'param', 'type' => 'string']);
-
-        $request = new Request();
-        $request->attributes->set('_route', 'fixture');
 
         $this->integerProcessorMock
             ->expects(static::once())
@@ -124,49 +138,58 @@ class TypeCheckHandlerTest extends TestCase
         $this->loggerMock
             ->expects(static::once())
             ->method('error')
-            ->with(
-                sprintf(
-                    'No processor found to check value of expected type %s in annotation %s on route %s.',
-                    $annotation->getType(),
-                    $annotation->getName(),
-                    $request->attributes->get('_route')
-                )
-            );
+            ->with('No processor found to check expected value type "string" for param "param" on route "test".');
 
-        $this->typeCheckHandler->process($annotation, $request, 'aaa');
+        $this->typeCheckHandler->process(
+            paramAttribute: $paramAttribute,
+            request: new Request(attributes: ['_route' => 'test']),
+            value: 'aaa'
+        );
     }
 
-    /** @test */
-    public function processNoTypeValidationRequiredTest(): void
+    public function noTypeAnnotationOrAttributeProvider(): array
     {
-        $annotation = new QueryParam(['name' => 'param']);
-
-        $request = new Request();
-        $request->attributes->set('_route', 'fixture');
-
-        static::assertEquals(1, $this->typeCheckHandler->process($annotation, $request, 1));
+        return [
+            'paramAnnotation' => [new QueryParamAnnotation(name: 'param')],
+            'paramAttribute' => [new QueryParamAttribute(name: 'param')],
+        ];
     }
 
-    /** @test */
-    public function processTest(): void
+    /**
+     * @test
+     * @dataProvider noTypeAnnotationOrAttributeProvider
+     */
+    public function processNoTypeValidationRequiredTest(ParamAttributeInterface $paramAttribute): void
     {
-        $annotation = new QueryParam(['name' => 'param', 'type' => 'int']);
+        static::assertEquals(
+            expected: 1,
+            actual: $this->typeCheckHandler->process(
+                paramAttribute: $paramAttribute,
+                request: new Request(attributes: ['_route' => 'test']),
+                value: 1
+            )
+        );
+    }
 
-        $request = new Request();
-        $request->attributes->set('_route', 'fixture');
+    /**
+     * @test
+     * @dataProvider intAnnotationOrAttributeProvider
+     */
+    public function processTest(ParamAttributeInterface $paramAttribute): void
+    {
+        $request = new Request(attributes: ['_route' => 'test']);
 
-        $this->integerProcessorMock
-            ->expects(static::once())
-            ->method('supports')
-            ->with('int')
-            ->willReturn(true);
+        $this->integerProcessorMock->expects(static::once())->method('supports')->with('int')->willReturn(true);
 
         $this->integerProcessorMock
             ->expects(static::once())
             ->method('process')
-            ->with($annotation, $request, 1)
+            ->with($paramAttribute, $request, 1)
             ->willReturn(1);
 
-        static::assertEquals(1, $this->typeCheckHandler->process($annotation, $request, 1));
+        static::assertEquals(
+            expected: 1,
+            actual: $this->typeCheckHandler->process(paramAttribute: $paramAttribute, request: $request, value: 1)
+        );
     }
 }

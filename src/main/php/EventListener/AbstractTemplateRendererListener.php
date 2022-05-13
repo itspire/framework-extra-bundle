@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2016 - 2020 Itspire.
+ * Copyright (c) 2016 - 2022 Itspire.
  * This software is licensed under the BSD-3-Clause license. (see LICENSE.md for full license)
  * All Right Reserved.
  */
@@ -12,13 +12,16 @@ namespace Itspire\FrameworkExtraBundle\EventListener;
 
 use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
+use Psr\Log\LoggerInterface;
 use Twig\Environment;
 
-trait TemplateRendererTrait
+abstract class AbstractTemplateRendererListener
 {
-    private ?Environment $twig = null;
+    public function __construct(protected LoggerInterface $logger, private Environment $twig)
+    {
+    }
 
-    private function renderTemplate(
+    protected function renderTemplate(
         string $responseFormat,
         string $serializedContent,
         string $errorMessagePart
@@ -30,14 +33,11 @@ trait TemplateRendererTrait
             );
         } catch (\Throwable $renderException) {
             $this->logger->error(
-                sprintf('Could not render template with %s', $errorMessagePart),
+                vsprintf(format: 'Could not render template with %s', values: [$errorMessagePart]),
                 ['exception' => $renderException]
             );
 
-            throw new HttpException(
-                new HttpExceptionDefinition(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR),
-                $renderException
-            );
+            throw new HttpException(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR, $renderException);
         }
     }
 }

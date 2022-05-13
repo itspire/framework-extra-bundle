@@ -1,7 +1,7 @@
 <?php
 
-/**
- * Copyright (c) 2016 - 2019 Itspire.
+/*
+ * Copyright (c) 2016 - 2022 Itspire.
  * This software is licensed under the BSD-3-Clause license. (see LICENSE.md for full license)
  * All Right Reserved.
  */
@@ -13,6 +13,7 @@ namespace Itspire\FrameworkExtraBundle\Tests\TestApp\Model;
 use JMS\Serializer\Annotation as Serializer;
 
 /** @Serializer\XmlRoot("testObject") */
+#[Serializer\XmlRoot('testObject')]
 class TestObject
 {
     /**
@@ -20,6 +21,9 @@ class TestObject
      * @Serializer\SerializedName("testProperty")
      * @Serializer\Type("string")
      */
+    #[Serializer\XmlAttribute]
+    #[Serializer\SerializedName('testProperty')]
+    #[Serializer\Type('string')]
     private ?string $testProperty = null;
 
     /**
@@ -28,6 +32,10 @@ class TestObject
      * @Serializer\Type("int")
      * @Serializer\Groups({"extended"})
      */
+    #[Serializer\XmlAttribute]
+    #[Serializer\SerializedName('testProperty2')]
+    #[Serializer\Type('int')]
+    #[Serializer\Groups(['extended'])]
     private ?int $testProperty2 = null;
 
     public function getTestProperty(): ?string

@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2016 - 2020 Itspire.
+ * Copyright (c) 2016 - 2022 Itspire.
  * This software is licensed under the BSD-3-Clause license. (see LICENSE.md for full license)
  * All Right Reserved.
  */
@@ -10,32 +10,15 @@ declare(strict_types=1);
 
 namespace Itspire\FrameworkExtraBundle\Annotation;
 
+use Doctrine\Common\Annotations\Annotation\NamedArgumentConstructor;
+use Itspire\FrameworkExtraBundle\Attribute\HeaderParam as AttributeHeaderParam;
+
 /**
+ * @deprecated
  * @Annotation
+ * @NamedArgumentConstructor
  * @Target("METHOD")
  */
-class HeaderParam extends AbstractParam
+class HeaderParam extends AttributeHeaderParam implements AnnotationInterface
 {
-    private ?string $headerName = null;
-
-    public function __construct(array $configuration)
-    {
-        parent::__construct($configuration);
-
-        if (null === $this->headerName) {
-            $this->headerName = $this->name;
-        }
-    }
-
-    public function setHeaderName(string $headerName): self
-    {
-        $this->headerName = $headerName;
-
-        return $this;
-    }
-
-    public function getHeaderName(): ?string
-    {
-        return $this->headerName;
-    }
 }

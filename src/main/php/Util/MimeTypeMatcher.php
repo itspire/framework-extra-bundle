@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2016 - 2020 Itspire.
+ * Copyright (c) 2016 - 2022 Itspire.
  * This software is licensed under the BSD-3-Clause license. (see LICENSE.md for full license)
  * All Right Reserved.
  */
@@ -14,34 +14,34 @@ class MimeTypeMatcher implements MimeTypeMatcherInterface
 {
     /**
      * @param string[] $requestValues
-     * @param string[] $annotationValues
+     * @param string[] $attributeValues
      */
-    public function findMimeTypeMatch(array $requestValues, array $annotationValues): ?string
+    public function findMimeTypeMatch(array $requestValues, array $attributeValues): ?string
     {
-        $splitAnnotations = [];
-        foreach ($annotationValues as $key => $annotationValue) {
-            if (!empty($annotationValue)) {
-                $splitAnnotations[$key] = explode('/', $annotationValue);
+        $attributesParts = [];
+        foreach ($attributeValues as $key => $attributeValue) {
+            if (!empty($attributeValue)) {
+                $attributesParts[$key] = explode('/', $attributeValue);
             }
         }
 
         foreach ($requestValues as $requestValue) {
             if (!empty($requestValue)) {
                 if ('*/*' === $requestValue) {
-                    return $annotationValues[0];
+                    return $attributeValues[0];
                 }
 
-                if (in_array($requestValue, $annotationValues)) {
+                if (in_array($requestValue, $attributeValues)) {
                     return $requestValue;
                 }
 
                 $requestValueParts = explode('/', $requestValue);
-                foreach ($splitAnnotations as $key => $splitAnnotation) {
+                foreach ($attributesParts as $key => $attributeParts) {
                     if (
-                        ($requestValueParts[0] === $splitAnnotation[0] && '*' === $requestValueParts[1])
-                        || ($requestValueParts[1] === $splitAnnotation[1] && '*' === $requestValueParts[0])
+                        ($requestValueParts[0] === $attributeParts[0] && '*' === $requestValueParts[1])
+                        || ($requestValueParts[1] === $attributeParts[1] && '*' === $requestValueParts[0])
                     ) {
-                        return $annotationValues[$key];
+                        return $attributeValues[$key];
                     }
                 }
             }

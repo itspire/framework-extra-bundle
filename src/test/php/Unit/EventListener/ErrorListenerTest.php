@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2016 - 2020 Itspire.
+ * Copyright (c) 2016 - 2022 Itspire.
  * This software is licensed under the BSD-3-Clause license. (see LICENSE.md for full license)
  * All Right Reserved.
  */
@@ -54,13 +54,11 @@ class ErrorListenerTest extends TestCase
         $this->event = new ExceptionEvent(
             $this->getMockBuilder(HttpKernelInterface::class)->getMock(),
             new Request(),
-            HttpKernelInterface::MASTER_REQUEST,
-            new HttpException(
-                new HttpExceptionDefinition(HttpExceptionDefinition::HTTP_CONFLICT)
-            )
+            HttpKernelInterface::MAIN_REQUEST,
+            new HttpException(HttpExceptionDefinition::HTTP_CONFLICT)
         );
 
-        $this->errorListener = new ErrorListener($this->loggerMock, $this->twigMock, $this->serializerMock);
+        $this->errorListener = new ErrorListener($this->serializerMock, $this->loggerMock, $this->twigMock);
     }
 
     protected function tearDown(): void
@@ -77,13 +75,13 @@ class ErrorListenerTest extends TestCase
         $reflectionProperty = $reflectionClass->getProperty('exceptionApiMappers');
         $reflectionProperty->setAccessible(true);
 
-        static::assertCount(0, $reflectionProperty->getValue($this->errorListener));
+        static::assertCount(expectedCount: 0, haystack: $reflectionProperty->getValue($this->errorListener));
 
         $this->errorListener->registerMapper($this->exceptionMapperMock);
-        static::assertCount(1, $reflectionProperty->getValue($this->errorListener));
+        static::assertCount(expectedCount: 1, haystack: $reflectionProperty->getValue($this->errorListener));
 
         $this->errorListener->registerMapper($this->exceptionMapperMock);
-        static::assertCount(1, $reflectionProperty->getValue($this->errorListener));
+        static::assertCount(expectedCount: 1, haystack: $reflectionProperty->getValue($this->errorListener));
     }
 
     /** @test */
@@ -93,13 +91,13 @@ class ErrorListenerTest extends TestCase
         $reflectionProperty = $reflectionClass->getProperty('exceptionApiAdapters');
         $reflectionProperty->setAccessible(true);
 
-        static::assertCount(0, $reflectionProperty->getValue($this->errorListener));
+        static::assertCount(expectedCount: 0, haystack: $reflectionProperty->getValue($this->errorListener));
 
         $this->errorListener->registerAdapter($this->exceptionAdapterMock);
-        static::assertCount(1, $reflectionProperty->getValue($this->errorListener));
+        static::assertCount(expectedCount: 1, haystack: $reflectionProperty->getValue($this->errorListener));
 
         $this->errorListener->registerAdapter($this->exceptionAdapterMock);
-        static::assertCount(1, $reflectionProperty->getValue($this->errorListener));
+        static::assertCount(expectedCount: 1, haystack: $reflectionProperty->getValue($this->errorListener));
     }
 
     /** @test */
@@ -107,17 +105,17 @@ class ErrorListenerTest extends TestCase
     {
         $this->errorListener->onKernelException($this->event);
 
-        static::assertNull($this->event->getResponse());
+        static::assertNull(actual: $this->event->getResponse());
     }
 
     /** @test */
     public function onKernelExceptionNotHandledExceptionTest(): void
     {
-        $this->event->getRequest()->attributes->set(CustomRequestAttributes::ROUTE_CALLED, true);
+        $this->event->getRequest()->attributes->set(key: CustomRequestAttributes::ROUTE_CALLED, value: true);
 
         $this->errorListener->onKernelException($this->event);
 
-        static::assertNull($this->event->getResponse());
+        static::assertNull(actual: $this->event->getResponse());
     }
 
     /** @test */
@@ -128,49 +126,54 @@ class ErrorListenerTest extends TestCase
         $exception = $this->event->getThrowable();
         $exceptionDefinition = $exception->getExceptionDefinition();
 
-        $request->attributes->set(CustomRequestAttributes::ROUTE_CALLED, true);
-        $request->attributes->set(CustomRequestAttributes::RESPONSE_CONTENT_TYPE, MimeType::APPLICATION_XML);
-        $request->attributes->set(CustomRequestAttributes::RESPONSE_FORMAT, 'xml');
+        $request->attributes->set(key: CustomRequestAttributes::ROUTE_CALLED, value: true);
+        $request->attributes->set(
+            key: CustomRequestAttributes::RESPONSE_CONTENT_TYPE,
+            value: MimeType::APPLICATION_XML->value
+        );
+        $request->attributes->set(key: CustomRequestAttributes::RESPONSE_FORMAT, value: 'xml');
 
         $this->loggerMock
-            ->expects(static::at(0))
+            ->expects(static::exactly(1))
             ->method('notice')
             ->with(
-                sprintf(
-                    'No HttpResponseStatus mapping found for %s exception definition : %d - %s.',
-                    get_class($exceptionDefinition),
-                    $exceptionDefinition->getCode(),
-                    $exceptionDefinition->getDescription()
+                vsprintf(
+                    format: 'No HttpResponseStatus mapping found for %s exception definition : %d - %s.',
+                    values: [
+                        $exceptionDefinition::class,
+                        $exceptionDefinition->name,
+                        $exceptionDefinition->getDescription(),
+                    ]
                 ),
                 ['exceptionDefinition' => $exceptionDefinition]
             );
-
-        $this->loggerMock->expects(static::atMost(1))->method('notice');
 
         $this->errorListener->onKernelException($this->event);
 
         $response = $this->event->getResponse();
 
-        static::assertEquals(HttpResponseStatus::HTTP_INTERNAL_SERVER_ERROR, $response->getStatusCode());
+        static::assertEquals(
+            expected: HttpResponseStatus::HTTP_INTERNAL_SERVER_ERROR->value,
+            actual: $response->getStatusCode()
+        );
     }
 
     /** @test */
     public function onKernelExceptionNoMatchingMapperNorAdapterTest(): void
     {
-        $this->event->setThrowable(
-            new WebserviceException(
-                new WebserviceExceptionDefinition(WebserviceExceptionDefinition::CONFLICT)
-            )
-        );
+        $this->event->setThrowable(new WebserviceException(WebserviceExceptionDefinition::CONFLICT));
 
         $request = $this->event->getRequest();
         /** @var ExceptionInterface $exception */
         $exception = $this->event->getThrowable();
         $exceptionDefinition = $exception->getExceptionDefinition();
 
-        $request->attributes->set(CustomRequestAttributes::ROUTE_CALLED, true);
-        $request->attributes->set(CustomRequestAttributes::RESPONSE_CONTENT_TYPE, MimeType::APPLICATION_XML);
-        $request->attributes->set(CustomRequestAttributes::RESPONSE_FORMAT, 'xml');
+        $request->attributes->set(key: CustomRequestAttributes::ROUTE_CALLED, value: true);
+        $request->attributes->set(
+            key: CustomRequestAttributes::RESPONSE_CONTENT_TYPE,
+            value: MimeType::APPLICATION_XML->value
+        );
+        $request->attributes->set(key: CustomRequestAttributes::RESPONSE_FORMAT, value: 'xml');
 
         $this->exceptionMapperMock
             ->expects(static::once())
@@ -181,29 +184,27 @@ class ErrorListenerTest extends TestCase
         $this->exceptionAdapterMock->expects(static::once())->method('supports')->with($exception)->willReturn(false);
 
         $this->loggerMock
-            ->expects(static::at(0))
+            ->expects(static::exactly(2))
             ->method('notice')
-            ->with(
-                sprintf(
-                    'No HttpResponseStatus mapping found for %s exception definition : %d - %s.',
-                    get_class($exceptionDefinition),
-                    $exceptionDefinition->getCode(),
-                    $exceptionDefinition->getDescription()
-                ),
-                ['exceptionDefinition' => $exceptionDefinition]
-            );
-
-        $this->loggerMock
-            ->expects(static::at(1))
-            ->method('notice')
-            ->with(
-                sprintf(
-                    'No adapter found for %s exception : %d - %s.',
-                    get_class($exception),
-                    $exception->getCode(),
-                    $exception->getMessage()
-                ),
-                ['exception' => $exception]
+            ->withConsecutive(
+                [
+                    vsprintf(
+                        format: 'No HttpResponseStatus mapping found for %s exception definition : %d - %s.',
+                        values: [
+                            $exceptionDefinition::class,
+                            $exceptionDefinition->name,
+                            $exceptionDefinition->getDescription(),
+                        ]
+                    ),
+                    ['exceptionDefinition' => $exceptionDefinition]
+                ],
+                [
+                    vsprintf(
+                        format: 'No adapter found for %s exception : %d - %s.',
+                        values: [$exception::class, $exception->getCode(), $exception->getMessage()]
+                    ),
+                    ['exception' => $exception]
+                ]
             );
 
         $this->errorListener
@@ -213,53 +214,53 @@ class ErrorListenerTest extends TestCase
 
         $response = $this->event->getResponse();
 
-        static::assertEquals(HttpResponseStatus::HTTP_INTERNAL_SERVER_ERROR, $response->getStatusCode());
+        static::assertEquals(
+            expected: HttpResponseStatus::HTTP_INTERNAL_SERVER_ERROR->value,
+            actual: $response->getStatusCode()
+        );
     }
 
     /** @test */
     public function onKernelExceptionHtmlRenderingErrorTest(): void
     {
-        $this->event->setThrowable(
-            new WebserviceException(
-                new WebserviceExceptionDefinition(WebserviceExceptionDefinition::CONFLICT)
-            )
-        );
+        $this->event->setThrowable(new WebserviceException(WebserviceExceptionDefinition::CONFLICT));
 
         $request = $this->event->getRequest();
         /** @var ExceptionInterface $exception */
         $exception = $this->event->getThrowable();
         $exceptionDefinition = $exception->getExceptionDefinition();
 
-        $request->attributes->set(CustomRequestAttributes::ROUTE_CALLED, true);
-        $request->attributes->set(CustomRequestAttributes::RESPONSE_CONTENT_TYPE, MimeType::TEXT_HTML);
-        $request->attributes->set(CustomRequestAttributes::RESPONSE_FORMAT, 'json');
-
-        $httpResponseStatus = new HttpResponseStatus(HttpResponseStatus::HTTP_FORBIDDEN);
+        $request->attributes->set(key: CustomRequestAttributes::ROUTE_CALLED, value: true);
+        $request->attributes->set(
+            key: CustomRequestAttributes::RESPONSE_CONTENT_TYPE,
+            value: MimeType::TEXT_HTML->value
+        );
+        $request->attributes->set(key: CustomRequestAttributes::RESPONSE_FORMAT, value: 'json');
 
         $webserviceApiException = (new ApiExceptionModel\Webservice\WebserviceExceptionApi())
             ->setCode((string) $exception->getCode())
             ->setMessage($exception->getMessage());
 
         $this->exceptionMapperMock
-            ->expects(static::at(0))
+            ->expects(static::exactly(1))
             ->method('supports')
             ->with($exceptionDefinition)
             ->willReturn(true);
 
         $this->exceptionMapperMock
-            ->expects(static::at(1))
+            ->expects(static::exactly(1))
             ->method('map')
             ->with($exceptionDefinition)
-            ->willReturn($httpResponseStatus);
+            ->willReturn(HttpResponseStatus::HTTP_FORBIDDEN);
 
         $this->exceptionAdapterMock
-            ->expects(static::at(0))
+            ->expects(static::exactly(1))
             ->method('supports')
             ->with($exception)
             ->willReturn(true);
 
         $this->exceptionAdapterMock
-            ->expects(static::at(1))
+            ->expects(static::exactly(1))
             ->method('adaptBusinessExceptionToApiException')
             ->with($exception)
             ->willReturn($webserviceApiException);
@@ -277,7 +278,10 @@ class ErrorListenerTest extends TestCase
 
         $response = $this->event->getResponse();
 
-        static::assertEquals(HttpResponseStatus::HTTP_INTERNAL_SERVER_ERROR, $response->getStatusCode());
+        static::assertEquals(
+            expected: HttpResponseStatus::HTTP_INTERNAL_SERVER_ERROR->value,
+            actual: $response->getStatusCode()
+        );
     }
 
     /** @test */
@@ -288,26 +292,27 @@ class ErrorListenerTest extends TestCase
         $exception = $this->event->getThrowable();
         $exceptionDefinition = $exception->getExceptionDefinition();
 
-        $request->attributes->set(CustomRequestAttributes::ROUTE_CALLED, true);
-        $request->attributes->set(CustomRequestAttributes::RESPONSE_CONTENT_TYPE, MimeType::APPLICATION_XML);
-        $request->attributes->set(CustomRequestAttributes::RESPONSE_FORMAT, 'xml');
-
-        $httpResponseStatus = new HttpResponseStatus(HttpResponseStatus::HTTP_CONFLICT);
+        $request->attributes->set(key: CustomRequestAttributes::ROUTE_CALLED, value: true);
+        $request->attributes->set(
+            key: CustomRequestAttributes::RESPONSE_CONTENT_TYPE,
+            value: MimeType::APPLICATION_XML->value
+        );
+        $request->attributes->set(key: CustomRequestAttributes::RESPONSE_FORMAT, value: 'xml');
 
         $this->exceptionMapperMock
-            ->expects(static::at(0))
+            ->expects(static::exactly(1))
             ->method('supports')
             ->with($exceptionDefinition)
             ->willReturn(true);
 
         $this->exceptionMapperMock
-            ->expects(static::at(1))
+            ->expects(static::exactly(1))
             ->method('map')
             ->with($exceptionDefinition)
-            ->willReturn($httpResponseStatus);
+            ->willReturn(HttpResponseStatus::HTTP_CONFLICT);
 
         $this->exceptionAdapterMock
-            ->expects(static::at(0))
+            ->expects(static::exactly(1))
             ->method('supports')
             ->with($exception)
             ->willReturn(false);
@@ -319,46 +324,44 @@ class ErrorListenerTest extends TestCase
 
         $response = $this->event->getResponse();
 
-        static::assertEquals(HttpResponseStatus::HTTP_CONFLICT, $response->getStatusCode());
+        static::assertEquals(expected: HttpResponseStatus::HTTP_CONFLICT->value, actual: $response->getStatusCode());
     }
 
     /** @test */
     public function onKernelExceptionWithHtmlRenderingTest(): void
     {
-        $this->event->setThrowable(
-            new WebserviceException(
-                new WebserviceExceptionDefinition(WebserviceExceptionDefinition::CONFLICT)
-            )
-        );
+        $this->event->setThrowable(new WebserviceException(WebserviceExceptionDefinition::CONFLICT));
 
         $request = $this->event->getRequest();
         /** @var ExceptionInterface $exception */
         $exception = $this->event->getThrowable();
         $exceptionDefinition = $exception->getExceptionDefinition();
 
-        $request->attributes->set(CustomRequestAttributes::ROUTE_CALLED, true);
-        $request->attributes->set(CustomRequestAttributes::RESPONSE_CONTENT_TYPE, MimeType::TEXT_HTML);
-        $request->attributes->set(CustomRequestAttributes::RESPONSE_FORMAT, 'json');
+        $request->attributes->set(key: CustomRequestAttributes::ROUTE_CALLED, value: true);
+        $request->attributes->set(
+            key: CustomRequestAttributes::RESPONSE_CONTENT_TYPE,
+            value: MimeType::TEXT_HTML->value
+        );
+        $request->attributes->set(key: CustomRequestAttributes::RESPONSE_FORMAT, value: 'json');
 
-        $httpResponseStatus = new HttpResponseStatus(HttpResponseStatus::HTTP_CONFLICT);
+        $httpResponseStatus = HttpResponseStatus::HTTP_CONFLICT;
 
         $webserviceException = (new ApiExceptionModel\Webservice\WebserviceExceptionApi())
             ->setCode((string) $exception->getCode())
             ->setMessage($exception->getMessage());
 
-        $json = sprintf(
-            <<<JSON
-            {
-                "code": "%s",
-                "description": "%s"
-            }
+        $json = vsprintf(
+            format: <<<JSON
+                {
+                    "code": "%s",
+                    "description": "%s"
+                }
             JSON,
-            $httpResponseStatus->getCode(),
-            $httpResponseStatus->getDescription()
+            values: [$httpResponseStatus->name, $httpResponseStatus->getDescription()]
         );
 
-        $html = sprintf(
-            <<<HTML
+        $html = vsprintf(
+            format: <<<HTML
                 <html lang="fr">
                     <body>
                         <pre lang="json">
@@ -370,30 +373,29 @@ class ErrorListenerTest extends TestCase
                     </body>
                 </html>
             HTML,
-            $httpResponseStatus->getCode(),
-            $httpResponseStatus->getDescription()
+            values: [$httpResponseStatus->name, $httpResponseStatus->getDescription()]
         );
 
         $this->exceptionMapperMock
-            ->expects(static::at(0))
+            ->expects(static::exactly(1))
             ->method('supports')
             ->with($exceptionDefinition)
             ->willReturn(true);
 
         $this->exceptionMapperMock
-            ->expects(static::at(1))
+            ->expects(static::exactly(1))
             ->method('map')
             ->with($exceptionDefinition)
             ->willReturn($httpResponseStatus);
 
         $this->exceptionAdapterMock
-            ->expects(static::at(0))
+            ->expects(static::exactly(1))
             ->method('supports')
             ->with($exception)
             ->willReturn(true);
 
         $this->exceptionAdapterMock
-            ->expects(static::at(1))
+            ->expects(static::exactly(1))
             ->method('adaptBusinessExceptionToApiException')
             ->with($exception)
             ->willReturn($webserviceException);
@@ -407,13 +409,7 @@ class ErrorListenerTest extends TestCase
         $this->twigMock
             ->expects(static::once())
             ->method('render')
-            ->with(
-                '@ItspireFrameworkExtra/response.html.twig',
-                [
-                    'controllerResult' => $json,
-                    'format' => 'json',
-                ]
-            )
+            ->with('@ItspireFrameworkExtra/response.html.twig', ['controllerResult' => $json, 'format' => 'json'])
             ->willReturn($html);
 
         $this->errorListener
@@ -423,7 +419,7 @@ class ErrorListenerTest extends TestCase
 
         $response = $this->event->getResponse();
 
-        static::assertEquals(HttpResponseStatus::HTTP_CONFLICT, $response->getStatusCode());
-        static::assertEquals($html, $response->getContent());
+        static::assertEquals(expected: HttpResponseStatus::HTTP_CONFLICT->value, actual: $response->getStatusCode());
+        static::assertEquals(expected: $html, actual: $response->getContent());
     }
 }

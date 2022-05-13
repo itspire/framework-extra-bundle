@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2016 - 2020 Itspire.
+ * Copyright (c) 2016 - 2022 Itspire.
  * This software is licensed under the BSD-3-Clause license. (see LICENSE.md for full license)
  * All Right Reserved.
  */
@@ -13,9 +13,9 @@ namespace Itspire\FrameworkExtraBundle\Configuration;
 class CustomRequestAttributes
 {
     public const ROUTE_CALLED = 'itspire_framework_extra.route_called';
-    public const CONSUMES_ANNOTATION_PROCESSED = 'itspire_framework_extra.consumes_annotation_processed';
-    public const PRODUCES_ANNOTATION_PROCESSED = 'itspire_framework_extra.produces_annotation_processed';
-    public const BODY_PARAM_ANNOTATION_PROCESSED = 'itspire_framework_extra.body_param_annotation_processed';
+    public const CONSUMES_PROCESSED = 'itspire_framework_extra.consumes_processed';
+    public const PRODUCES_PROCESSED = 'itspire_framework_extra.produces_processed';
+    public const BODYPARAM_PROCESSED = 'itspire_framework_extra.bodyparam_processed';
 
     public const REQUEST_DESERIALIZATION_GROUPS = 'itspire_framework_extra.request_deserialization_groups';
 

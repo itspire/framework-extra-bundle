@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2016 - 2020 Itspire.
+ * Copyright (c) 2016 - 2022 Itspire.
  * This software is licensed under the BSD-3-Clause license. (see LICENSE.md for full license)
  * All Right Reserved.
  */
@@ -22,23 +22,22 @@ class ItspireFrameworkExtraExtension extends Extension
     /** @throws \Exception */
     public function load(array $configs, ContainerBuilder $container): void
     {
-        $configuration = new Configuration();
-        $config = $this->processConfiguration($configuration, $configs);
+        $config = $this->processConfiguration(new Configuration(), $configs);
 
         $container
-            ->registerForAutoconfiguration(ExceptionApiMapperInterface::class)
-            ->addTag('itspire.framework_extra.exception_api_mapper');
+            ->registerForAutoconfiguration(interface: ExceptionApiMapperInterface::class)
+            ->addTag(name: 'itspire.framework_extra.exception_api_mapper');
 
         $container
-            ->registerForAutoconfiguration(ExceptionApiAdapterInterface::class)
-            ->addTag('itspire.framework_extra.exception_api_adapter');
+            ->registerForAutoconfiguration(interface: ExceptionApiAdapterInterface::class)
+            ->addTag(name: 'itspire.framework_extra.exception_api_adapter');
 
         $container->setParameter(
-            Configuration::ALLOW_HTML_RESPONSE_PARAMETER,
-            $config['allow_html_response_content_type']
+            name: Configuration::ALLOW_HTML_RESPONSE_PARAMETER,
+            value: $config['allow_html_response_content_type']
         );
 
         $loader = new PhpFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
-        $loader->load('services.php');
+        $loader->load(resource: 'services.php');
     }
 }

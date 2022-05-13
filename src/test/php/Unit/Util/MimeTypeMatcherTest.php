@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2016 - 2020 Itspire.
+ * Copyright (c) 2016 - 2022 Itspire.
  * This software is licensed under the BSD-3-Clause license. (see LICENSE.md for full license)
  * All Right Reserved.
  */
@@ -37,10 +37,14 @@ class MimeTypeMatcherTest extends TestCase
     public function findMimeTypeMatchWildcardTest(): void
     {
         static::assertEquals(
-            MimeType::APPLICATION_XML,
-            $this->mimeTypeMatcher->findMimeTypeMatch(
-                ['*/*'],
-                [MimeType::APPLICATION_XML, MimeType::APPLICATION_JSON, MimeType::TEXT_HTML]
+            expected: MimeType::APPLICATION_XML->value,
+            actual: $this->mimeTypeMatcher->findMimeTypeMatch(
+                requestValues: ['*/*'],
+                attributeValues: [
+                    MimeType::APPLICATION_XML->value,
+                    MimeType::APPLICATION_JSON->value,
+                    MimeType::TEXT_HTML->value,
+                ]
             )
         );
     }
@@ -49,10 +53,14 @@ class MimeTypeMatcherTest extends TestCase
     public function findMimeTypeMatchSingleMatchTest(): void
     {
         static::assertEquals(
-            MimeType::APPLICATION_JSON,
-            $this->mimeTypeMatcher->findMimeTypeMatch(
-                [MimeType::APPLICATION_JSON],
-                [MimeType::APPLICATION_XML, MimeType::APPLICATION_JSON, MimeType::TEXT_HTML]
+            expected: MimeType::APPLICATION_JSON->value,
+            actual: $this->mimeTypeMatcher->findMimeTypeMatch(
+                requestValues: [MimeType::APPLICATION_JSON->value],
+                attributeValues: [
+                    MimeType::APPLICATION_XML->value,
+                    MimeType::APPLICATION_JSON->value,
+                    MimeType::TEXT_HTML->value,
+                ]
             )
         );
     }
@@ -61,10 +69,14 @@ class MimeTypeMatcherTest extends TestCase
     public function findMimeTypeMatchLeadingWildcardTest(): void
     {
         static::assertEquals(
-            MimeType::APPLICATION_JSON,
-            $this->mimeTypeMatcher->findMimeTypeMatch(
-                ['*/json'],
-                [MimeType::APPLICATION_XML, MimeType::APPLICATION_JSON, MimeType::TEXT_HTML]
+            expected: MimeType::APPLICATION_JSON->value,
+            actual: $this->mimeTypeMatcher->findMimeTypeMatch(
+                requestValues:  ['*/json'],
+                attributeValues: [
+                    MimeType::APPLICATION_XML->value,
+                    MimeType::APPLICATION_JSON->value,
+                    MimeType::TEXT_HTML->value,
+                ]
             )
         );
     }
@@ -73,10 +85,14 @@ class MimeTypeMatcherTest extends TestCase
     public function findMimeTypeMatchEndingWildcardTest(): void
     {
         static::assertEquals(
-            MimeType::APPLICATION_XML,
-            $this->mimeTypeMatcher->findMimeTypeMatch(
-                ['application/*'],
-                [MimeType::TEXT_HTML, MimeType::APPLICATION_XML, MimeType::APPLICATION_JSON]
+            expected: MimeType::APPLICATION_XML->value,
+            actual: $this->mimeTypeMatcher->findMimeTypeMatch(
+                requestValues: ['application/*'],
+                attributeValues: [
+                    MimeType::TEXT_HTML->value,
+                    MimeType::APPLICATION_XML->value,
+                    MimeType::APPLICATION_JSON->value,
+                ]
             )
         );
     }
@@ -85,9 +101,9 @@ class MimeTypeMatcherTest extends TestCase
     public function findMimeTypeMatchNoMatchTest(): void
     {
         static::assertNull(
-            $this->mimeTypeMatcher->findMimeTypeMatch(
-                [MimeType::TEXT_HTML],
-                [MimeType::APPLICATION_XML, MimeType::APPLICATION_JSON]
+            actual: $this->mimeTypeMatcher->findMimeTypeMatch(
+                requestValues: [MimeType::TEXT_HTML->value],
+                attributeValues: [MimeType::APPLICATION_XML->value, MimeType::APPLICATION_JSON->value]
             )
         );
     }

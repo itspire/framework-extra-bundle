@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2016 - 2020 Itspire.
+ * Copyright (c) 2016 - 2022 Itspire.
  * This software is licensed under the BSD-3-Clause license. (see LICENSE.md for full license)
  * All Right Reserved.
  */
@@ -12,68 +12,61 @@ namespace Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck;
 
 use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
-use Itspire\FrameworkExtraBundle\Annotation\ParamInterface;
+use Itspire\FrameworkExtraBundle\Attribute\ParamAttributeInterface;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\Processor\TypeCheckProcessorInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
 
 class TypeCheckHandler implements TypeCheckHandlerInterface
 {
-    protected ?LoggerInterface $logger = null;
-
     /** @var TypeCheckProcessorInterface[] */
     private array $processors = [];
 
-    public function __construct(LoggerInterface $logger, iterable $typeCheckProcessors = [])
+    public function __construct(protected LoggerInterface $logger, iterable $processors = [])
     {
-        $this->logger = $logger;
-
-        foreach ($typeCheckProcessors as $typeCheckProcessor) {
-            $this->registerProcessor($typeCheckProcessor);
+        foreach ($processors as $processor) {
+            $this->registerProcessor($processor);
         }
     }
 
     public function registerProcessor(TypeCheckProcessorInterface $typeCheckProcessor): self
     {
-        $typeCheckProcessorClass = get_class($typeCheckProcessor);
-
-        if (false === array_key_exists($typeCheckProcessorClass, $this->processors)) {
-            $this->processors[$typeCheckProcessorClass] = $typeCheckProcessor;
+        if (false === array_key_exists($typeCheckProcessor::class, $this->processors)) {
+            $this->processors[$typeCheckProcessor::class] = $typeCheckProcessor;
         }
 
         return $this;
     }
 
-    /** @return mixed */
-    public function process(ParamInterface $annotation, Request $request, $value)
+    public function process(ParamAttributeInterface $paramAttribute, Request $request, mixed $value): mixed
     {
-        if (null === $annotation->getType()) {
+        if (null === $paramAttribute->getType()) {
             return $value;
         }
 
-        if (in_array($value, ['', null], true) && false === $annotation->isRequired()) {
+        if (in_array($value, ['', null], true) && false === $paramAttribute->isRequired()) {
             return $value;
         }
 
         foreach ($this->processors as $processor) {
-            if (false === $processor->supports($annotation->getType())) {
+            if (false === $processor->supports($paramAttribute->getType())) {
                 continue;
             }
 
-            return $processor->process($annotation, $request, $value);
+            return $processor->process($paramAttribute, $request, $value);
         }
 
         $this->logger->error(
-            sprintf(
-                'No processor found to check value of expected type %s in annotation %s on route %s.',
-                $annotation->getType(),
-                $annotation->getName(),
-                $request->attributes->get('_route')
+            vsprintf(
+                format: 'No processor found to check expected value type "%s" for param "%s" on route "%s".',
+                values: [
+                    $paramAttribute->getType(),
+                    $paramAttribute->getName(),
+                    $request->attributes->get(key: '_route'),
+                ]
             )
         );
 
-        throw new HttpException(
-            new HttpExceptionDefinition(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR)
-        );
+        throw new HttpException(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR);
     }
 }

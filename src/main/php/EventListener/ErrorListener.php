@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2016 - 2020 Itspire.
+ * Copyright (c) 2016 - 2022 Itspire.
  * This software is licensed under the BSD-3-Clause license. (see LICENSE.md for full license)
  * All Right Reserved.
  */
@@ -12,9 +12,9 @@ namespace Itspire\FrameworkExtraBundle\EventListener;
 
 use Itspire\Common\Enum\Http\HttpResponseStatus;
 use Itspire\Common\Enum\MimeType;
-use Itspire\Exception\Api\Model as ApiExceptionModel;
 use Itspire\Exception\Api\Adapter\ExceptionApiAdapterInterface;
 use Itspire\Exception\Api\Mapper\ExceptionApiMapperInterface;
+use Itspire\Exception\Api\Model as ApiExceptionModel;
 use Itspire\Exception\Definition\ExceptionDefinitionInterface;
 use Itspire\Exception\ExceptionInterface;
 use Itspire\Exception\Http\HttpException;
@@ -25,14 +25,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Twig\Environment;
 
-class ErrorListener
+class ErrorListener extends AbstractTemplateRendererListener
 {
-    use TemplateRendererTrait;
-
-    private ?LoggerInterface $logger = null;
-    private ?Environment $twig = null;
-    private ?SerializerInterface $serializer = null;
-
     /** @var ExceptionApiMapperInterface[]  */
     private array $exceptionApiMappers = [];
 
@@ -40,15 +34,13 @@ class ErrorListener
     private array $exceptionApiAdapters = [];
 
     public function __construct(
+        private SerializerInterface $serializer,
         LoggerInterface $logger,
         Environment $twig,
-        SerializerInterface $serializer,
         iterable $exceptionApiMappers = [],
         iterable $exceptionApiAdapters = []
     ) {
-        $this->logger = $logger;
-        $this->twig = $twig;
-        $this->serializer = $serializer;
+        parent::__construct($logger, $twig);
 
         foreach ($exceptionApiMappers as $exceptionApiMapper) {
             $this->registerMapper($exceptionApiMapper);
@@ -61,10 +53,8 @@ class ErrorListener
 
     public function registerMapper(ExceptionApiMapperInterface $exceptionApiMapper): self
     {
-        $mapperClass = get_class($exceptionApiMapper);
-
-        if (false === array_key_exists($mapperClass, $this->exceptionApiMappers)) {
-            $this->exceptionApiMappers[$mapperClass] = $exceptionApiMapper;
+        if (false === array_key_exists($exceptionApiMapper::class, $this->exceptionApiMappers)) {
+            $this->exceptionApiMappers[$exceptionApiMapper::class] = $exceptionApiMapper;
         }
 
         return $this;
@@ -72,10 +62,8 @@ class ErrorListener
 
     public function registerAdapter(ExceptionApiAdapterInterface $exceptionApiAdapter): self
     {
-        $adapterClass = get_class($exceptionApiAdapter);
-
-        if (false === array_key_exists($adapterClass, $this->exceptionApiAdapters)) {
-            $this->exceptionApiAdapters[$adapterClass] = $exceptionApiAdapter;
+        if (false === array_key_exists($exceptionApiAdapter::class, $this->exceptionApiAdapters)) {
+            $this->exceptionApiAdapters[$exceptionApiAdapter::class] = $exceptionApiAdapter;
         }
 
         return $this;
@@ -86,24 +74,26 @@ class ErrorListener
         $exception = $event->getThrowable();
         $request = $event->getRequest();
 
-        if (true === $request->attributes->get(CustomRequestAttributes::ROUTE_CALLED)) {
-            // These are defined if the Produces annotation is defined
-            $responseContentType = $request->attributes->get(CustomRequestAttributes::RESPONSE_CONTENT_TYPE);
-            $responseFormat = $request->attributes->get(CustomRequestAttributes::RESPONSE_FORMAT);
+        if (true === $request->attributes->get(key: CustomRequestAttributes::ROUTE_CALLED)) {
+            $responseContentType = $request->attributes->get(key: CustomRequestAttributes::RESPONSE_CONTENT_TYPE);
+            $responseFormat = $request->attributes->get(key: CustomRequestAttributes::RESPONSE_FORMAT);
 
             if (
                 null !== $responseContentType
                 && $exception instanceof ExceptionInterface
                 && in_array(
                     $responseContentType,
-                    [MimeType::TEXT_HTML, MimeType::APPLICATION_XML, MimeType::APPLICATION_JSON],
+                    array_map(
+                        fn (MimeType $mimeType) => $mimeType->value,
+                        [MimeType::TEXT_HTML, MimeType::APPLICATION_XML, MimeType::APPLICATION_JSON]
+                    ),
                     true
                 )
             ) {
                 $httpResponseStatus = $this->mapException($exception->getExceptionDefinition());
                 $apiException = $this->adaptException($exception);
 
-                $response = new Response('', $httpResponseStatus->getValue());
+                $response = new Response(status: $httpResponseStatus->value);
 
                 if (null !== $apiException) {
                     $response->setContent(
@@ -111,19 +101,19 @@ class ErrorListener
                     );
                 }
 
-                $response->headers->set('Content-Type', $responseContentType);
-                $messagePart = 'exception of type ' . get_class($exception);
+                $response->headers->set(key: 'Content-Type', values: $responseContentType);
+                $messagePart = 'exception of type ' . $exception::class;
 
                 try {
                     $response->setContent(
-                        ($responseContentType === MimeType::TEXT_HTML)
+                        ($responseContentType === MimeType::TEXT_HTML->value)
                             ? $this->renderTemplate($responseFormat, $response->getContent(), $messagePart)
                             : $response->getContent()
                     );
                 } catch (HttpException $httpException) {
                     // Error has already been logged in renderTemplate
                     $response->setStatusCode(
-                        (int) $httpException->getExceptionDefinition()->getValue(),
+                        $httpException->getExceptionDefinition()->value,
                         $httpException->getExceptionDefinition()->getDescription()
                     );
                 }
@@ -142,16 +132,18 @@ class ErrorListener
         }
 
         $this->logger->notice(
-            sprintf(
-                'No HttpResponseStatus mapping found for %s exception definition : %d - %s.',
-                get_class($exceptionDefinition),
-                $exceptionDefinition->getCode(),
-                $exceptionDefinition->getDescription()
+            vsprintf(
+                format: 'No HttpResponseStatus mapping found for %s exception definition : %d - %s.',
+                values: [
+                    $exceptionDefinition::class,
+                    $exceptionDefinition->name,
+                    $exceptionDefinition->getDescription(),
+                ]
             ),
             ['exceptionDefinition' => $exceptionDefinition]
         );
 
-        return new HttpResponseStatus(HttpResponseStatus::HTTP_INTERNAL_SERVER_ERROR);
+        return HttpResponseStatus::HTTP_INTERNAL_SERVER_ERROR;
     }
 
     private function adaptException(ExceptionInterface $exception): ?ApiExceptionModel\ExceptionApiInterface
@@ -165,11 +157,9 @@ class ErrorListener
         // Http exceptions do not require an adapter
         if (!$exception instanceof HttpException) {
             $this->logger->notice(
-                sprintf(
-                    'No adapter found for %s exception : %d - %s.',
-                    get_class($exception),
-                    $exception->getCode(),
-                    $exception->getMessage()
+                vsprintf(
+                    format: 'No adapter found for %s exception : %d - %s.',
+                    values: [$exception::class, $exception->getCode(), $exception->getMessage()]
                 ),
                 ['exception' => $exception]
             );

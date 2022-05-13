@@ -8,7 +8,6 @@
 /vendor/
 
 # PHPUnit
-/phpunit.xml
 .phpunit.result.cache
 
 # Build data

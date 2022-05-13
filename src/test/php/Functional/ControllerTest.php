@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2016 - 2020 Itspire.
+ * Copyright (c) 2016 - 2022 Itspire.
  * This software is licensed under the BSD-3-Clause license. (see LICENSE.md for full license)
  * All Right Reserved.
  */
@@ -29,8 +29,8 @@ class ControllerTest extends WebTestCase
     {
         parent::setUp();
 
-        $this->client = static::createClient();
-        $this->router = static::$kernel->getContainer()->get('router');
+        $this->client = static::createClient(server: ['PHP_AUTH_USER' => 'test', 'PHP_AUTH_PW'   => 'password']);
+        $this->router = static::$kernel->getContainer()->get(id: 'router');
     }
 
     public function tearDown(): void
@@ -50,78 +50,145 @@ class ControllerTest extends WebTestCase
             'Header Param' => 'application/xml',
         ];
 
-        $expectedContent = json_encode($expectedResult);
-
         $this->client->request(
-            HttpMethod::POST,
-            $this->router->generate('indexTest', ['qParam' => 'queryParam']),
-            ['rParam' => 10],
-            [],
-            ['CONTENT_TYPE' => MimeType::APPLICATION_XML, 'HTTP_ACCEPT' => MimeType::APPLICATION_JSON],
-            '<testObject testProperty="test" />'
+            method: HttpMethod::POST->value,
+            uri: $this->router->generate('indexTest', ['qParam' => 'queryParam']),
+            parameters: ['rParam' => 10],
+            server: [
+                'CONTENT_TYPE' => MimeType::APPLICATION_XML->value,
+                'HTTP_ACCEPT' => MimeType::APPLICATION_JSON->value,
+            ],
+            content: '<testObject testProperty="test" />'
         );
 
         $response = $this->client->getResponse();
 
-        static::assertEquals(HttpResponseStatus::HTTP_OK, $response->getStatusCode());
-        static::assertEquals($expectedContent, $response->getContent());
+        static::assertEquals(expected: HttpResponseStatus::HTTP_OK->value, actual: $response->getStatusCode());
+        static::assertEquals(expected: json_encode($expectedResult), actual: $response->getContent());
+    }
+
+    /** @test */
+    public function indexAttrTest(): void
+    {
+        $expectedResult = [
+            'Query Param Attr' => 'queryParam',
+            'Request Param Attr' => 10,
+            'Body Param Attr' => 'test',
+            'Header Param Attr' => 'application/xml',
+        ];
+
+        $this->client->request(
+            method: HttpMethod::POST->value,
+            uri: $this->router->generate('indexAttrTest', ['qParam' => 'queryParam']),
+            parameters: ['rParam' => 10],
+            server: [
+                'CONTENT_TYPE' => MimeType::APPLICATION_XML->value,
+                'HTTP_ACCEPT' => MimeType::APPLICATION_JSON->value,
+            ],
+            content: '<testObject testProperty="test" />'
+        );
+
+        $response = $this->client->getResponse();
+
+        static::assertEquals(expected: HttpResponseStatus::HTTP_OK->value, actual: $response->getStatusCode());
+        static::assertEquals(expected: json_encode($expectedResult), actual: $response->getContent());
     }
 
     /** @test */
     public function serializeTest(): void
     {
         $this->client->request(
-            HttpMethod::GET,
-            $this->router->generate('serializeTest'),
-            [],
-            [],
-            ['HTTP_ACCEPT' => MimeType::APPLICATION_XML]
+            method: HttpMethod::GET->value,
+            uri: $this->router->generate('serializeTest'),
+            server: ['HTTP_ACCEPT' => MimeType::APPLICATION_XML->value]
         );
 
         $response = $this->client->getResponse();
 
-        static::assertEquals(HttpResponseStatus::HTTP_OK, $response->getStatusCode());
-        static::assertStringNotContainsString('<html lang="fr">', $response->getContent());
-        static::assertStringContainsString('testObject testProperty', $response->getContent());
-        static::assertStringContainsString('testing', $response->getContent());
+        static::assertEquals(expected: HttpResponseStatus::HTTP_OK->value, actual: $response->getStatusCode());
+        static::assertStringNotContainsString(needle: '<html lang="fr">', haystack: $response->getContent());
+        static::assertStringContainsString(needle: 'testObject testProperty', haystack: $response->getContent());
+        static::assertStringContainsString(needle: 'testing', haystack: $response->getContent());
+    }
+
+    /** @test */
+    public function serializeAttrTest(): void
+    {
+        $this->client->request(
+            method: HttpMethod::GET->value,
+            uri: $this->router->generate('serializeAttrTest'),
+            server: ['HTTP_ACCEPT' => MimeType::APPLICATION_XML->value]
+        );
+
+        $response = $this->client->getResponse();
+
+        static::assertEquals(expected: HttpResponseStatus::HTTP_OK->value, actual: $response->getStatusCode());
+        static::assertStringNotContainsString(needle: '<html lang="fr">', haystack: $response->getContent());
+        static::assertStringContainsString(needle: 'testObject testProperty', haystack: $response->getContent());
+        static::assertStringContainsString(needle: 'testing', haystack: $response->getContent());
     }
 
     /** @test */
     public function regularTest(): void
     {
-        $this->client->request(HttpMethod::GET, $this->router->generate('regularTest'));
+        $this->client->request(HttpMethod::GET->value, $this->router->generate('regularTest'));
 
         $response = $this->client->getResponse();
 
-        static::assertEquals(HttpResponseStatus::HTTP_OK, $response->getStatusCode());
-        static::assertEmpty($response->getContent());
+        static::assertEquals(expected: HttpResponseStatus::HTTP_OK->value, actual: $response->getStatusCode());
+        static::assertEmpty(actual: $response->getContent());
+    }
+
+    /** @test */
+    public function regularAttrTest(): void
+    {
+        $this->client->request(HttpMethod::GET->value, $this->router->generate('regularAttrTest'));
+
+        $response = $this->client->getResponse();
+
+        static::assertEquals(expected: HttpResponseStatus::HTTP_OK->value, actual: $response->getStatusCode());
+        static::assertEmpty(actual: $response->getContent());
     }
 
     /** @test */
     public function regularWithTemplateTest(): void
     {
-        $this->client->request(HttpMethod::GET, $this->router->generate('regularTemplateTest'));
+        $this->client->request(HttpMethod::GET->value, $this->router->generate('regularTemplateTest'));
 
         $response = $this->client->getResponse();
 
-        static::assertEquals(HttpResponseStatus::HTTP_OK, $response->getStatusCode());
-        static::assertStringContainsString('<pre lang="json">', $response->getContent());
-        static::assertStringContainsString('[&quot;test&quot;]', $response->getContent());
-        static::assertStringContainsString('Symfony Web Debug Toolbar', $response->getContent());
+        static::assertEquals(expected: HttpResponseStatus::HTTP_OK->value, actual: $response->getStatusCode());
+        static::assertStringContainsString(needle: '<pre lang="json">', haystack: $response->getContent());
+        static::assertStringContainsString(needle: '[&quot;testWithTemplate&quot;]', haystack: $response->getContent());
+        static::assertStringContainsString(needle: 'Symfony Web Debug Toolbar', haystack: $response->getContent());
     }
 
-    // TODO Add test exception Http
+    /** @test */
+    public function regularWithTemplateAttrTest(): void
+    {
+        $this->client->request(HttpMethod::GET->value, $this->router->generate('regularTemplateAttrTest'));
+
+        $response = $this->client->getResponse();
+
+        static::assertEquals(expected: HttpResponseStatus::HTTP_OK->value, actual: $response->getStatusCode());
+        static::assertStringContainsString(needle: '<pre lang="json">', haystack: $response->getContent());
+        static::assertStringContainsString(
+            needle: '[&quot;testWithTemplateAttr&quot;]',
+            haystack: $response->getContent()
+        );
+        static::assertStringContainsString(needle: 'Symfony Web Debug Toolbar', haystack: $response->getContent());
+    }
+
     /** @test */
     public function exceptionTest(): void
     {
         $this->client->request(
-            HttpMethod::GET,
-            $this->router->generate('exceptionTest'),
-            [],
-            [],
-            ['HTTP_ACCEPT' => MimeType::APPLICATION_JSON]
+            method: HttpMethod::GET->value,
+            uri: $this->router->generate('exceptionTest'),
+            server: ['HTTP_ACCEPT' => MimeType::APPLICATION_JSON->value]
         );
 
+        // Do not indent JSON : it would cause test failure
         $expectedContent = <<<JSON
         {
             "code": "CONFLICT",
@@ -132,100 +199,244 @@ class ControllerTest extends WebTestCase
 
         $response = $this->client->getResponse();
 
-        static::assertEquals(HttpResponseStatus::HTTP_CONFLICT, $response->getStatusCode());
-        static::assertEquals($expectedContent, $response->getContent());
+        static::assertEquals(expected: HttpResponseStatus::HTTP_CONFLICT->value, actual: $response->getStatusCode());
+        static::assertEquals(expected: $expectedContent, actual: $response->getContent());
+    }
+
+    /** @test */
+    public function exceptionAttrTest(): void
+    {
+        $this->client->request(
+            method: HttpMethod::GET->value,
+            uri: $this->router->generate('exceptionAttrTest'),
+            server: ['HTTP_ACCEPT' => MimeType::APPLICATION_JSON->value]
+        );
+
+        // Do not indent JSON : it would cause test failure
+        $expectedContent = <<<JSON
+        {
+            "code": "RETRIEVAL",
+            "message": "itspire.exceptions.definitions.webservice.retrieval",
+            "details": []
+        }
+        JSON;
+
+        $response = $this->client->getResponse();
+
+        static::assertEquals(expected: HttpResponseStatus::HTTP_BAD_REQUEST->value, actual: $response->getStatusCode());
+        static::assertEquals(expected: $expectedContent, actual: $response->getContent());
     }
 
     /** @test */
     public function exceptionWildcardAcceptTest(): void
     {
         $this->client->request(
-            HttpMethod::GET,
-            $this->router->generate('exceptionTest'),
-            [],
-            [],
-            ['HTTP_ACCEPT' => 'application/*']
+            method: HttpMethod::GET->value,
+            uri: $this->router->generate('exceptionTest'),
+            server: ['HTTP_ACCEPT' => 'application/*']
         );
 
         $response = $this->client->getResponse();
 
-        static::assertEquals(HttpResponseStatus::HTTP_CONFLICT, $response->getStatusCode());
-        static::assertStringNotContainsString('<html lang="fr">', $response->getContent());
-        static::assertStringContainsString('ws_exception', $response->getContent());
-        static::assertStringContainsString('CONFLICT', $response->getContent());
+        static::assertEquals(expected: HttpResponseStatus::HTTP_CONFLICT->value, actual: $response->getStatusCode());
+        static::assertStringNotContainsString(needle: '<html lang="fr">', haystack: $response->getContent());
+        static::assertStringContainsString(needle: 'ws_exception', haystack: $response->getContent());
+        static::assertStringContainsString(needle: 'CONFLICT', haystack: $response->getContent());
+    }
+
+    /** @test */
+    public function exceptionWildcardAcceptAttrTest(): void
+    {
+        $this->client->request(
+            method: HttpMethod::GET->value,
+            uri: $this->router->generate('exceptionAttrTest'),
+            server: ['HTTP_ACCEPT' => 'application/*']
+        );
+
+        $response = $this->client->getResponse();
+
+        static::assertEquals(expected: HttpResponseStatus::HTTP_BAD_REQUEST->value, actual: $response->getStatusCode());
+        static::assertStringNotContainsString(needle: '<html lang="fr">', haystack: $response->getContent());
+        static::assertStringContainsString(needle: 'ws_exception', haystack: $response->getContent());
+        static::assertStringContainsString(needle: 'RETRIEVAL', haystack: $response->getContent());
     }
 
     /** @test */
     public function exceptionFullWildcardAcceptTest(): void
     {
         $this->client->request(
-            HttpMethod::GET,
-            $this->router->generate('exceptionTest', ['renderHtml' => true]),
-            [],
-            [],
-            ['HTTP_ACCEPT' => '*/*']
+            method: HttpMethod::GET->value,
+            uri: $this->router->generate('exceptionTest', ['renderHtml' => true]),
+            server: ['HTTP_ACCEPT' => '*/*']
         );
 
         $response = $this->client->getResponse();
 
-        static::assertEquals(HttpResponseStatus::HTTP_CONFLICT, $response->getStatusCode());
-        static::assertStringContainsString('<html lang="fr">', $response->getContent());
-        static::assertStringContainsString('<pre lang="xml">', $response->getContent());
-        static::assertStringContainsString('ws_exception', $response->getContent());
-        static::assertStringContainsString('CONFLICT', $response->getContent());
-        static::assertStringContainsString('Symfony Web Debug Toolbar', $response->getContent());
+        static::assertEquals(expected: HttpResponseStatus::HTTP_CONFLICT->value, actual: $response->getStatusCode());
+        static::assertStringContainsString(needle: '<html lang="fr">', haystack: $response->getContent());
+        static::assertStringContainsString(needle: '<pre lang="xml">', haystack: $response->getContent());
+        static::assertStringContainsString(needle: 'ws_exception', haystack: $response->getContent());
+        static::assertStringContainsString(needle: 'CONFLICT', haystack: $response->getContent());
+        static::assertStringContainsString(needle: 'Symfony Web Debug Toolbar', haystack: $response->getContent());
+    }
+
+    /** @test */
+    public function exceptionFullWildcardAcceptAttrTest(): void
+    {
+        $this->client->request(
+            method: HttpMethod::GET->value,
+            uri: $this->router->generate('exceptionAttrTest', ['renderHtml' => true]),
+            server: ['HTTP_ACCEPT' => '*/*']
+        );
+
+        $response = $this->client->getResponse();
+
+        static::assertEquals(expected: HttpResponseStatus::HTTP_BAD_REQUEST->value, actual: $response->getStatusCode());
+        static::assertStringContainsString(needle: '<html lang="fr">', haystack: $response->getContent());
+        static::assertStringContainsString(needle: '<pre lang="xml">', haystack: $response->getContent());
+        static::assertStringContainsString(needle: 'ws_exception', haystack: $response->getContent());
+        static::assertStringContainsString(needle: 'RETRIEVAL', haystack: $response->getContent());
+        static::assertStringContainsString(needle: 'Symfony Web Debug Toolbar', haystack: $response->getContent());
+    }
+
+    /** @test */
+    public function httpExceptionTest(): void
+    {
+        $this->client->request(
+            method: HttpMethod::GET->value,
+            uri: $this->router->generate('httpExceptionTest'),
+            server: ['HTTP_ACCEPT' => MimeType::APPLICATION_JSON->value]
+        );
+
+        $response = $this->client->getResponse();
+
+        static::assertEquals(expected: HttpResponseStatus::HTTP_BAD_REQUEST->value, actual: $response->getStatusCode());
+        static::assertEmpty(actual: $response->getContent());
+    }
+
+    /** @test */
+    public function httpExceptionAttrTest(): void
+    {
+        $this->client->request(
+            method: HttpMethod::GET->value,
+            uri: $this->router->generate('httpExceptionAttrTest'),
+            server: ['HTTP_ACCEPT' => MimeType::APPLICATION_JSON->value]
+        );
+
+        $response = $this->client->getResponse();
+
+        static::assertEquals(
+            expected: HttpResponseStatus::HTTP_NOT_ACCEPTABLE->value,
+            actual: $response->getStatusCode()
+        );
+        static::assertEmpty(actual: $response->getContent());
     }
 
     /** @test */
     public function uploadTest(): void
     {
         $this->client->request(
-            HttpMethod::POST,
-            $this->router->generate('uploadTest'),
-            [],
-            ['fParam' => new UploadedFile(realpath(__DIR__ . '/../../resources/test.txt'), 'myTest.txt')],
-            ['HTTP_ACCEPT' => '*/*']
+            method: HttpMethod::POST->value,
+            uri: $this->router->generate('uploadTest'),
+            files: ['fParam' => new UploadedFile(realpath(__DIR__ . '/../../resources/test.txt'), 'myTest.txt')],
+            server: ['HTTP_ACCEPT' => '*/*']
         );
 
         $response = $this->client->getResponse();
 
-        static::assertEquals(HttpResponseStatus::HTTP_OK, $response->getStatusCode());
+        static::assertEquals(HttpResponseStatus::HTTP_OK->value, $response->getStatusCode());
+        static::assertEquals('File Infos :<br/>{{myTest.txt}}<br/>{{txt}}<br/>{{10}}<br/>', $response->getContent());
+    }
+
+    /** @test */
+    public function uploadAttrTest(): void
+    {
+        $this->client->request(
+            method: HttpMethod::POST->value,
+            uri: $this->router->generate('uploadAttrTest'),
+            files: ['fParam' => new UploadedFile(realpath(__DIR__ . '/../../resources/test.txt'), 'myTest.txt')],
+            server: ['HTTP_ACCEPT' => '*/*']
+        );
+
+        $response = $this->client->getResponse();
+
+        static::assertEquals(HttpResponseStatus::HTTP_OK->value, $response->getStatusCode());
         static::assertEquals('File Infos :<br/>{{myTest.txt}}<br/>{{txt}}<br/>{{10}}<br/>', $response->getContent());
     }
 
     /** @test */
     public function getFileTest(): void
     {
-        $this->client->request(HttpMethod::GET, $this->router->generate('getFileTest'));
+        $this->client->request(HttpMethod::GET->value, $this->router->generate('getFileTest'));
 
         $expectedFile = new File(realpath(__DIR__ . '/../../resources/test.txt'));
 
         /** @var BinaryFileResponse $response */
         $response = $this->client->getResponse();
 
-        static::assertEquals(HttpResponseStatus::HTTP_OK, $response->getStatusCode());
+        static::assertEquals(HttpResponseStatus::HTTP_OK->value, $response->getStatusCode());
+        static::assertEquals($expectedFile->getFileInfo(), $response->getFile()->getFileInfo());
+    }
+
+    /** @test */
+    public function getFileAttrTest(): void
+    {
+        $this->client->request(HttpMethod::GET->value, $this->router->generate('getFileAttrTest'));
+
+        $expectedFile = new File(realpath(__DIR__ . '/../../resources/test.txt'));
+
+        /** @var BinaryFileResponse $response */
+        $response = $this->client->getResponse();
+
+        static::assertEquals(HttpResponseStatus::HTTP_OK->value, $response->getStatusCode());
         static::assertEquals($expectedFile->getFileInfo(), $response->getFile()->getFileInfo());
     }
 
     /** @test */
     public function securitySuccessTest(): void
     {
-        $this->client->request(HttpMethod::GET, $this->router->generate('securitySuccessTest'));
+        $this->client->request(HttpMethod::GET->value, $this->router->generate('securitySuccessTest'));
 
         $response = $this->client->getResponse();
 
-        static::assertEquals(HttpResponseStatus::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        static::assertEquals(HttpResponseStatus::HTTP_OK->value, $response->getStatusCode());
+        static::assertEquals('success', $response->getContent());
+    }
+
+    /** @test */
+    public function securitySuccessAttrTest(): void
+    {
+        $this->client->request(HttpMethod::GET->value, $this->router->generate('securitySuccessAttrTest'));
+
+        $response = $this->client->getResponse();
+
+        static::assertEquals(HttpResponseStatus::HTTP_OK->value, $response->getStatusCode());
         static::assertEquals('success', $response->getContent());
     }
 
     /** @test */
     public function securityFailTest(): void
     {
-        $this->client->request(HttpMethod::GET, $this->router->generate('securityFailTest'));
+        $this->client->request(HttpMethod::GET->value, $this->router->generate('securityFailTest'));
 
         $response = $this->client->getResponse();
 
-        static::assertEquals(HttpResponseStatus::HTTP_FORBIDDEN, $this->client->getResponse()->getStatusCode());
-        static::assertStringContainsString((string) HttpResponseStatus::HTTP_FORBIDDEN, $response->getContent());
+        $httpResponseStatus = HttpResponseStatus::HTTP_FORBIDDEN;
+
+        static::assertEquals($httpResponseStatus->value, $response->getStatusCode());
+        static::assertStringContainsString($httpResponseStatus->getDescription(), $response->getContent());
+    }
+
+    /** @test */
+    public function securityFailAttrTest(): void
+    {
+        $this->client->request(HttpMethod::GET->value, $this->router->generate('securityFailAttrTest'));
+
+        $response = $this->client->getResponse();
+
+        $httpResponseStatus = HttpResponseStatus::HTTP_FORBIDDEN;
+
+        static::assertEquals($httpResponseStatus->value, $response->getStatusCode());
+        static::assertStringContainsString($httpResponseStatus->getDescription(), $response->getContent());
     }
 }

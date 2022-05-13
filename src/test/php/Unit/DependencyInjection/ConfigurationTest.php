@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2016 - 2020 Itspire.
+ * Copyright (c) 2016 - 2022 Itspire.
  * This software is licensed under the BSD-3-Clause license. (see LICENSE.md for full license)
  * All Right Reserved.
  */
@@ -22,43 +22,40 @@ class ConfigurationTest extends TestCase
     {
         $this->expectException(InvalidConfigurationException::class);
 
-        $config = [
+        $configs = [
             'itspire_framework_extra' => [
                 'allow_html_response_content_type' => 'false',
             ]
         ];
 
-        $processor = new Processor();
-        $processor->processConfiguration(new Configuration(), $config);
+        (new Processor())->processConfiguration(new Configuration(), $configs);
     }
 
     /** @test */
     public function getConfigTreeBuilderWithAllowedHtmlResponseContentTypeTest(): void
     {
-        $config = [
+        $configs = [
             'itspire_framework_extra' => [
                 'allow_html_response_content_type' => true,
             ]
         ];
 
-        $processor = new Processor();
-        $processedConfig = $processor->processConfiguration(new Configuration(), $config);
+        $processedConfig = (new Processor())->processConfiguration(new Configuration(), $configs);
 
-        static::assertTrue($processedConfig['allow_html_response_content_type']);
+        static::assertTrue(condition: $processedConfig['allow_html_response_content_type']);
     }
 
     /** @test */
     public function getConfigTreeBuilderWithDisallowedHtmlResponseContentTypeTest(): void
     {
-        $config = [
+        $configs = [
             'itspire_framework_extra' => [
                 'allow_html_response_content_type' => false,
             ]
         ];
 
-        $processor = new Processor();
-        $processedConfig = $processor->processConfiguration(new Configuration(), $config);
+        $processedConfig = (new Processor())->processConfiguration(new Configuration(), $configs);
 
-        static::assertFalse($processedConfig['allow_html_response_content_type']);
+        static::assertFalse(condition: $processedConfig['allow_html_response_content_type']);
     }
 }

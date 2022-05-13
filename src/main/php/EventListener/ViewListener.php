@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2016 - 2020 Itspire.
+ * Copyright (c) 2016 - 2022 Itspire.
  * This software is licensed under the BSD-3-Clause license. (see LICENSE.md for full license)
  * All Right Reserved.
  */
@@ -27,20 +27,13 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpKernel\Event\ViewEvent;
 use Twig\Environment;
 
-class ViewListener
+class ViewListener extends AbstractTemplateRendererListener
 {
-    use TemplateRendererTrait;
-
     private const HANDLED_MIME_TYPES = [MimeType::TEXT_HTML, MimeType::APPLICATION_XML, MimeType::APPLICATION_JSON];
 
-    private ?SerializerInterface $serializer = null;
-    private ?LoggerInterface $logger = null;
-
-    public function __construct(SerializerInterface $serializer, LoggerInterface $logger, Environment $twig)
+    public function __construct(private SerializerInterface $serializer, LoggerInterface $logger, Environment $twig)
     {
-        $this->serializer = $serializer;
-        $this->logger = $logger;
-        $this->twig = $twig;
+        parent::__construct($logger, twig: $twig);
     }
 
     public function onKernelView(ViewEvent $event): void
@@ -50,51 +43,50 @@ class ViewListener
 
         // When @Template is used, even the RESPONSE_STATUS_CODE attribute will not be taken into account
         if (
-            true === $request->attributes->get(CustomRequestAttributes::ROUTE_CALLED)
-            && !$request->attributes->has('_template')
+            true === $request->attributes->get(key: CustomRequestAttributes::ROUTE_CALLED)
+            && !$request->attributes->has(key: '_template')
         ) {
             $responseStatusCode = $request->attributes->get(
-                CustomRequestAttributes::RESPONSE_STATUS_CODE,
-                $this->getResponseStatusCode($request)
+                key: CustomRequestAttributes::RESPONSE_STATUS_CODE,
+                default: $this->getResponseStatus($request)->value
             );
 
             if ($controllerResult instanceof File) {
                 $event->setResponse(
                     new BinaryFileResponse(
-                        $controllerResult,
-                        $responseStatusCode,
-                        [],
-                        true,
-                        ResponseHeaderBag::DISPOSITION_INLINE
+                        file: $controllerResult,
+                        status: $responseStatusCode,
+                        contentDisposition: ResponseHeaderBag::DISPOSITION_INLINE
                     )
                 );
             } else {
-                $response = new Response('', $responseStatusCode);
+                $response = new Response(status: $responseStatusCode);
 
                 if (null !== $controllerResult) {
-                    // These are defined if the Produces annotation is defined
-                    $responseContentType = $request->attributes->get(CustomRequestAttributes::RESPONSE_CONTENT_TYPE);
+                    $responseContentType = $request->attributes->get(
+                        key: CustomRequestAttributes::RESPONSE_CONTENT_TYPE
+                    );
 
                     if (
                         null !== $responseContentType
-                        && in_array($responseContentType, self::HANDLED_MIME_TYPES, true)
+                        && in_array(
+                            needle: $responseContentType,
+                            haystack: array_map(fn (MimeType $mimeType) => $mimeType->value, self::HANDLED_MIME_TYPES),
+                            strict: true
+                        )
                     ) {
-                        $messagePart = (is_array($controllerResult))
+                        $messagePart = is_array($controllerResult)
                             ? 'array'
                             : 'object of type ' . get_class($event->getControllerResult());
 
-                        $responseFormat = $request->attributes->get(CustomRequestAttributes::RESPONSE_FORMAT);
+                        $responseFormat = $request->attributes->get(key: CustomRequestAttributes::RESPONSE_FORMAT);
 
-                        $response->headers->set('Content-Type', $responseContentType);
+                        $response->headers->set(key: 'Content-Type', values: $responseContentType);
 
-                        $serializedContent = $this->serializeControllerResult(
-                            $event,
-                            $responseFormat,
-                            $messagePart
-                        );
+                        $serializedContent = $this->serializeControllerResult($event, $responseFormat, $messagePart);
 
                         $response->setContent(
-                            ($responseContentType === MimeType::TEXT_HTML)
+                            ($responseContentType === MimeType::TEXT_HTML->value)
                                 ? $this->renderTemplate($responseFormat, $serializedContent, $messagePart)
                                 : $serializedContent
                         );
@@ -115,39 +107,30 @@ class ViewListener
         $controllerResult = $event->getControllerResult();
 
         $serializationContext = SerializationContext::create();
-        if (false !== $request->attributes->has(CustomRequestAttributes::RESPONSE_SERIALIZATION_GROUPS)) {
+        if (false !== $request->attributes->has(key: CustomRequestAttributes::RESPONSE_SERIALIZATION_GROUPS)) {
             $serializationContext->setGroups(
-                $request->attributes->get(CustomRequestAttributes::RESPONSE_SERIALIZATION_GROUPS)
+                $request->attributes->get(key: CustomRequestAttributes::RESPONSE_SERIALIZATION_GROUPS)
             );
         }
 
         try {
-            return $this->serializer->serialize(
-                $controllerResult,
-                $responseFormat,
-                $serializationContext
-            );
+            return $this->serializer->serialize($controllerResult, $responseFormat, $serializationContext);
         } catch (\Exception $serializerException) {
             $this->logger->error(
-                sprintf('Could not serialize response content from %s', $errorMessagePart),
+                vsprintf(format: 'Could not serialize response content from %s', values: [$errorMessagePart]),
                 ['exception' => $serializerException]
             );
 
-            throw new HttpException(
-                new HttpExceptionDefinition(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR),
-                $serializerException
-            );
+            throw new HttpException(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR, $serializerException);
         }
     }
 
-    private function getResponseStatusCode(Request $request): int
+    private function getResponseStatus(Request $request): HttpResponseStatus
     {
-        if (HttpMethod::POST === $request->getMethod()) {
-            return HttpResponseStatus::HTTP_CREATED;
-        } elseif (HttpMethod::DELETE === $request->getMethod()) {
-            return HttpResponseStatus::HTTP_NO_CONTENT;
-        }
-
-        return HttpResponseStatus::HTTP_OK;
+        return match (HttpMethod::tryFrom($request->getMethod())) {
+            HttpMethod::POST => HttpResponseStatus::HTTP_CREATED,
+            HttpMethod::DELETE => HttpResponseStatus::HTTP_NO_CONTENT,
+            default => HttpResponseStatus::HTTP_OK
+        };
     }
 }

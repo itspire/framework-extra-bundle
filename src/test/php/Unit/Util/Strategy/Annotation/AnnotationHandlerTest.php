@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2016 - 2020 Itspire.
+ * Copyright (c) 2016 - 2022 Itspire.
  * This software is licensed under the BSD-3-Clause license. (see LICENSE.md for full license)
  * All Right Reserved.
  */
@@ -29,6 +29,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 
+/** @deprecated */
 class AnnotationHandlerTest extends TestCase
 {
     private ?MockObject $loggerMock = null;
@@ -46,7 +47,7 @@ class AnnotationHandlerTest extends TestCase
 
         $this->fileParamProcessorMock = $this
             ->getMockBuilder(FileParamProcessor::class)
-            ->setConstructorArgs([$this->loggerMock, $this->typeCheckHandlerMock])
+            ->setConstructorArgs([$this->typeCheckHandlerMock, $this->loggerMock])
             ->getMock();
 
         $this->routeProcessorMock = $this
@@ -88,21 +89,19 @@ class AnnotationHandlerTest extends TestCase
     /** @test */
     public function processNoProcessorTest(): void
     {
-        $exceptionDefinition = new HttpExceptionDefinition(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR);
-
         $this->expectException(HttpException::class);
-        $this->expectExceptionCode($exceptionDefinition->getValue());
-        $this->expectExceptionMessage($exceptionDefinition->getDescription());
+        $this->expectExceptionCode(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR->value);
+        $this->expectExceptionMessage(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR->getDescription());
 
-        $annotation = new Route(['value' => '/test', 'responseStatus' => HttpResponseStatus::HTTP_OK]);
+        $annotation = new Route(path: '/test', responseStatus: HttpResponseStatus::HTTP_OK);
 
         $this->loggerMock
             ->expects(static::once())
             ->method('error')
             ->with(
                 sprintf(
-                    'No processor found for Annotation %s called in %s::process.',
-                    get_class($annotation),
+                    'No processor found for annotation of class %s called in %s::process.',
+                    $annotation::class,
                     AnnotationHandler::class
                 )
             );
@@ -112,7 +111,7 @@ class AnnotationHandlerTest extends TestCase
                 $this->getMockBuilder(HttpKernelInterface::class)->getMock(),
                 [new FixtureController(), 'fixture'],
                 new Request(),
-                HttpKernelInterface::MASTER_REQUEST
+                HttpKernelInterface::MAIN_REQUEST
             ),
             $annotation
         );
@@ -127,10 +126,10 @@ class AnnotationHandlerTest extends TestCase
             $this->getMockBuilder(HttpKernelInterface::class)->getMock(),
             [new FixtureController(), 'fixture'],
             new Request(),
-            HttpKernelInterface::MASTER_REQUEST
+            HttpKernelInterface::MAIN_REQUEST
         );
 
-        $annotation = new Route(['value' => '/test', 'responseStatus' => HttpResponseStatus::HTTP_OK]);
+        $annotation = new Route(path: '/test', responseStatus: HttpResponseStatus::HTTP_OK);
 
         $this->routeProcessorMock
             ->expects(static::once())
@@ -152,16 +151,16 @@ class AnnotationHandlerTest extends TestCase
         $this->annotationHandler->registerProcessor($this->routeProcessorMock);
 
         $file = new UploadedFile(realpath(__DIR__ . '/../../../../../resources/uploadedFile.txt'), 'uploadedFile.txt');
-        $request = new Request([], [], [], [], ['param' => $file]);
+        $request = new Request(files: ['param' => $file]);
 
         $event = new ControllerEvent(
             $this->getMockBuilder(HttpKernelInterface::class)->getMock(),
             [new FixtureController(), 'param'],
             $request,
-            HttpKernelInterface::MASTER_REQUEST
+            HttpKernelInterface::MAIN_REQUEST
         );
 
-        $annotation = new FileParam(['name' => 'param']);
+        $annotation = new FileParam(name: 'param');
 
         $this->routeProcessorMock
             ->expects(static::once())

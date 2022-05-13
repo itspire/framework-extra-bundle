@@ -1,181 +1,49 @@
 <?php
 
 /*
- * Copyright (c) 2016 - 2020 Itspire.
+ * Copyright (c) 2016 - 2022 Itspire.
  * This software is licensed under the BSD-3-Clause license. (see LICENSE.md for full license)
  * All Right Reserved.
  */
 
 declare(strict_types=1);
 
-namespace Unit\Util\Strategy\Annotation\Processor;
+namespace Itspire\FrameworkExtraBundle\Tests\Unit\Util\Strategy\Annotation\Processor;
 
-use Itspire\Common\Enum\MimeType;
-use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
-use Itspire\Exception\Http\HttpException;
 use Itspire\FrameworkExtraBundle\Annotation\BodyParam;
 use Itspire\FrameworkExtraBundle\Annotation\Consumes;
-use Itspire\FrameworkExtraBundle\Configuration\CustomRequestAttributes;
-use Itspire\FrameworkExtraBundle\Tests\Unit\Fixtures\FixtureController;
+use Itspire\FrameworkExtraBundle\Attribute\AttributeInterface;
+use Itspire\FrameworkExtraBundle\Tests\Unit\Util\Strategy\Attribute\Processor as AttributeProcessorTest;
 use Itspire\FrameworkExtraBundle\Util\MimeTypeMatcherInterface;
 use Itspire\FrameworkExtraBundle\Util\Strategy\Annotation\Processor\ConsumesProcessor;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Event\ControllerEvent;
-use Symfony\Component\HttpKernel\HttpKernelInterface;
 
-class ConsumesProcessorTest extends TestCase
+/** @deprecated */
+class ConsumesProcessorTest extends AttributeProcessorTest\ConsumesProcessorTest
 {
-    private ?MockObject $loggerMock = null;
-    private ?MockObject $mimeTypeMatcherMock = null;
-    private ?ConsumesProcessor $consumesProcessor = null;
-
     protected function setUp(): void
     {
-        parent::setUp();
-
         $this->loggerMock = $this->getMockBuilder(LoggerInterface::class)->getMock();
         $this->mimeTypeMatcherMock = $this->getMockBuilder(MimeTypeMatcherInterface::class)->getMock();
 
-        $this->consumesProcessor = new ConsumesProcessor($this->loggerMock, $this->mimeTypeMatcherMock);
-    }
-
-    protected function tearDown(): void
-    {
-        unset($this->loggerMock, $this->mimeTypeMatcherMock, $this->consumesProcessor);
-
-        parent::tearDown();
+        $this->consumesProcessor = new ConsumesProcessor($this->mimeTypeMatcherMock, $this->loggerMock);
     }
 
     public function supportsProvider(): array
     {
         return [
-            'notSupported' => [new BodyParam([]), false],
+            'notSupported' => [new BodyParam(name: 'param'), false],
             'supported' => [new Consumes([]), true],
         ];
     }
 
-    /**
-     * @test
-     * @dataProvider supportsProvider
-     */
-    public function supportsTest($type, $result): void
-    {
-        static::assertEquals($result, $this->consumesProcessor->supports($type));
-    }
-
-    /** @test */
-    public function processAlreadyProcessedTest(): void
-    {
-        $exceptionDefinition = new HttpExceptionDefinition(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR);
-
-        $this->expectException(HttpException::class);
-        $this->expectExceptionCode($exceptionDefinition->getValue());
-        $this->expectExceptionMessage($exceptionDefinition->getDescription());
-
-        $annotation = new Consumes(['value' => MimeType::APPLICATION_XML]);
-
-        $request = new Request();
-        $request->attributes->set(CustomRequestAttributes::CONSUMES_ANNOTATION_PROCESSED, true);
-
-        $reflectionClass = new \ReflectionClass(FixtureController::class);
-        $reflectionMethod = $reflectionClass->getMethod('param');
-
-        $this->loggerMock
-            ->expects(static::once())
-            ->method('error')
-            ->with(
-                sprintf(
-                    'Duplicate @Consumes annotation found on %s::%s.',
-                    $reflectionClass->getName(),
-                    $reflectionMethod->getName()
-                )
-            );
-
-        $this->consumesProcessor->process(
-            new ControllerEvent(
-                $this->getMockBuilder(HttpKernelInterface::class)->getMock(),
-                [new FixtureController(), 'param'],
-                $request,
-                HttpKernelInterface::MASTER_REQUEST
-            ),
-            $annotation
-        );
-    }
-
-    /** @test */
-    public function processUnsupportedMediaTypeTest(): void
-    {
-        $exceptionDefinition = new HttpExceptionDefinition(HttpExceptionDefinition::HTTP_UNSUPPORTED_MEDIA_TYPE);
-
-        $this->expectException(HttpException::class);
-        $this->expectExceptionCode($exceptionDefinition->getValue());
-        $this->expectExceptionMessage($exceptionDefinition->getDescription());
-
-        $annotation = new Consumes(['value' => MimeType::APPLICATION_XML]);
-
-        $request = new Request([], [], [], [], [], ['CONTENT_TYPE' => MimeType::TEXT_HTML]);
-
-        $this->mimeTypeMatcherMock
-            ->expects(static::once())
-            ->method('findMimeTypeMatch')
-            ->with([$request->headers->get('Content-Type')], $annotation->getConsumableContentTypes())
-            ->willReturn(null);
-
-        $this->loggerMock
-            ->expects(static::once())
-            ->method('alert')
-            ->with(
-                sprintf(
-                    'Unsupported Media Type %s used for body content in route %s.',
-                    $request->headers->get('Content-Type'),
-                    $request->attributes->get('_route')
-                )
-            );
-
-        $this->consumesProcessor->process(
-            new ControllerEvent(
-                $this->getMockBuilder(HttpKernelInterface::class)->getMock(),
-                [new FixtureController(), 'param'],
-                $request,
-                HttpKernelInterface::MASTER_REQUEST
-            ),
-            $annotation
-        );
-    }
-
-    /** @test */
-    public function processTest(): void
-    {
-        $annotation = new Consumes(
-            ['value' => MimeType::APPLICATION_XML, 'deserializationGroups' => ['Default', 'extended']]
-        );
-
-        $request = new Request([], [], [], [], [], ['CONTENT_TYPE' => MimeType::APPLICATION_XML]);
-
-        $this->mimeTypeMatcherMock
-            ->expects(static::once())
-            ->method('findMimeTypeMatch')
-            ->with([$request->headers->get('Content-Type')], $annotation->getConsumableContentTypes())
-            ->willReturn(MimeType::APPLICATION_XML);
-
-        $this->consumesProcessor->process(
-            new ControllerEvent(
-                $this->getMockBuilder(HttpKernelInterface::class)->getMock(),
-                [new FixtureController(), 'param'],
-                $request,
-                HttpKernelInterface::MASTER_REQUEST
-            ),
-            $annotation
-        );
-
-        static::assertTrue($request->attributes->get(CustomRequestAttributes::CONSUMES_ANNOTATION_PROCESSED));
-        static::assertEquals(['Default', 'extended'], $annotation->getDeserializationGroups());
-        static::assertEquals(
-            ['Default', 'extended'],
-            $request->attributes->get(CustomRequestAttributes::REQUEST_DESERIALIZATION_GROUPS)
+    protected function getConsumes(
+        mixed $consumableContentTypes = [],
+        mixed $deserializationGroups = []
+    ): AttributeInterface {
+        return new Consumes(
+            consumableContentTypes: $consumableContentTypes,
+            deserializationGroups: $deserializationGroups
         );
     }
 }

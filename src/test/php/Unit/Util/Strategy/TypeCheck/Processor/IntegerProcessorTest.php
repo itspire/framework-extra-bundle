@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2016 - 2020 Itspire.
+ * Copyright (c) 2016 - 2022 Itspire.
  * This software is licensed under the BSD-3-Clause license. (see LICENSE.md for full license)
  * All Right Reserved.
  */
@@ -12,7 +12,9 @@ namespace Itspire\FrameworkExtraBundle\Tests\Unit\Util\Strategy\TypeCheck\Proces
 
 use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
-use Itspire\FrameworkExtraBundle\Annotation\QueryParam;
+use Itspire\FrameworkExtraBundle\Annotation\QueryParam as QueryParamAnnotation;
+use Itspire\FrameworkExtraBundle\Attribute\ParamAttributeInterface;
+use Itspire\FrameworkExtraBundle\Attribute\QueryParam as QueryParamAttribute;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\Processor\IntegerProcessor;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -55,55 +57,55 @@ class IntegerProcessorTest extends TestCase
      */
     public function supportsTest($type, $result): void
     {
-        static::assertEquals($result, $this->integerProcessor->supports($type));
+        static::assertEquals(expected: $result, actual: $this->integerProcessor->supports($type));
     }
 
-    /** @test */
-    public function processUnsupportedTest(): void
-    {
-        $exceptionDefinition = new HttpExceptionDefinition(HttpExceptionDefinition::HTTP_BAD_REQUEST);
-
-        $this->expectException(HttpException::class);
-        $this->expectExceptionCode($exceptionDefinition->getValue());
-        $this->expectExceptionMessage($exceptionDefinition->getDescription());
-
-        $annotation = new QueryParam(['name' => 'param']);
-
-        $request = new Request();
-        $request->attributes->set('_route', 'test');
-
-        $this->loggerMock
-            ->expects(static::once())
-            ->method('alert')
-            ->with(
-                sprintf(
-                    'Invalid value type string provided for parameter %s on route %s : expected one of %s.',
-                    $annotation->getName(),
-                    $request->attributes->get('_route'),
-                    implode(', ', $this->integerProcessor->getTypes())
-                )
-            );
-
-        $this->integerProcessor->process($annotation, $request, 'testValue');
-    }
-
-    public function processProvider(): array
+    public function annotationOrAttributeProvider(): array
     {
         return [
-            'converted' => ['1', 1],
-            'raw' => [1, 1],
+            'paramAnnotation' => [new QueryParamAnnotation(name: 'param', type: 'integer')],
+            'paramAttribute' => [new QueryParamAttribute(name: 'param', type: 'integer')],
         ];
     }
 
     /**
      * @test
-     * @dataProvider processProvider
+     * @dataProvider annotationOrAttributeProvider
      */
-    public function processTest($initial, $result): void
+    public function processUnsupportedTest(ParamAttributeInterface $paramAttribute): void
+    {
+        $exceptionDefinition = HttpExceptionDefinition::HTTP_BAD_REQUEST;
+
+        $this->expectException(HttpException::class);
+        $this->expectExceptionCode($exceptionDefinition->value);
+        $this->expectExceptionMessage($exceptionDefinition->getDescription());
+
+        $request = new Request(attributes: ['_route' => 'test']);
+
+        $this->loggerMock
+            ->expects(static::once())
+            ->method('alert')
+            ->with(
+                'Invalid value type string provided for parameter param on route test : expected one of int, integer.'
+            );
+
+        $this->integerProcessor->process($paramAttribute, $request, 'test');
+    }
+
+    /**
+     * @test
+     * @dataProvider annotationOrAttributeProvider
+     */
+    public function processTest(ParamAttributeInterface $paramAttribute): void
     {
         static::assertEquals(
-            $result,
-            $this->integerProcessor->process(new QueryParam(['name' => 'param']), new Request(), $initial)
+            expected: 1,
+            actual: $this->integerProcessor->process($paramAttribute, new Request(), 1)
+        );
+
+        static::assertEquals(
+            expected: 1,
+            actual: $this->integerProcessor->process($paramAttribute, new Request(), '1')
         );
     }
 }

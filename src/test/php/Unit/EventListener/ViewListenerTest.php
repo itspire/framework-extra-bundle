@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2016 - 2020 Itspire.
+ * Copyright (c) 2016 - 2022 Itspire.
  * This software is licensed under the BSD-3-Clause license. (see LICENSE.md for full license)
  * All Right Reserved.
  */
@@ -47,7 +47,7 @@ class ViewListenerTest extends TestCase
         $this->twigMock = $this->getMockBuilder(Environment::class)->disableOriginalConstructor()->getMock();
         $this->kernelMock = $this->getMockBuilder(HttpKernelInterface::class)->getMock();
 
-        $this->event = new ViewEvent($this->kernelMock, new Request(), HttpKernelInterface::MASTER_REQUEST, null);
+        $this->event = new ViewEvent($this->kernelMock, new Request(), HttpKernelInterface::MAIN_REQUEST, null);
 
         $this->viewListener = new ViewListener($this->serializerMock, $this->loggerMock, $this->twigMock);
     }
@@ -63,21 +63,23 @@ class ViewListenerTest extends TestCase
     public function onKernelViewHandledRouteNotCalledTest(): void
     {
         $this->viewListener->onKernelView(
-            new ViewEvent($this->kernelMock, new Request(), HttpKernelInterface::MASTER_REQUEST, null)
+            new ViewEvent($this->kernelMock, new Request(), HttpKernelInterface::MAIN_REQUEST, null)
         );
 
-        static::assertNull($this->event->getResponse());
+        static::assertNull(actual: $this->event->getResponse());
     }
 
     /** @test */
     public function onKernelViewFileResultTest(): void
     {
-        $serverAttributes = ['REQUEST_METHOD' => HttpMethod::GET, 'CONTENT_TYPE' => MimeType::APPLICATION_JSON];
-        $request = new Request([], [], [], [], [], $serverAttributes);
-        $request->attributes->add(
-            [
+        $request = new Request(
+            attributes: [
                 CustomRequestAttributes::ROUTE_CALLED => true,
-                CustomRequestAttributes::RESPONSE_STATUS_CODE => HttpResponseStatus::HTTP_OK,
+                CustomRequestAttributes::RESPONSE_STATUS_CODE => HttpResponseStatus::HTTP_OK->value,
+            ],
+            server: [
+                'REQUEST_METHOD' => HttpMethod::GET->value,
+                'CONTENT_TYPE' => MimeType::APPLICATION_JSON->value,
             ]
         );
 
@@ -87,15 +89,15 @@ class ViewListenerTest extends TestCase
 
         $file = new File($filePath);
 
-        $event = new ViewEvent($this->kernelMock, $request, HttpKernelInterface::MASTER_REQUEST, $file);
+        $event = new ViewEvent($this->kernelMock, $request, HttpKernelInterface::MAIN_REQUEST, $file);
 
         $this->viewListener->onKernelView($event);
 
         /** @var BinaryFileResponse $response */
         $response = $event->getResponse();
 
-        static::assertEquals(HttpResponseStatus::HTTP_OK, $response->getStatusCode());
-        static::assertEquals($file, $response->getFile());
+        static::assertEquals(expected: HttpResponseStatus::HTTP_OK->value, actual: $response->getStatusCode());
+        static::assertEquals(expected: $file, actual: $response->getFile());
 
         unlink($filePath);
     }
@@ -104,23 +106,26 @@ class ViewListenerTest extends TestCase
     public function onKernelViewSerializationErrorTest(): void
     {
         $this->expectException(HttpException::class);
-        $this->expectExceptionCode(HttpResponseStatus::HTTP_INTERNAL_SERVER_ERROR);
+        $this->expectExceptionCode(HttpResponseStatus::HTTP_INTERNAL_SERVER_ERROR->value);
 
         $testObject = (new TestObject())->setTestProperty('test')->setTestProperty2(2);
 
-        $serverAttributes = [
-            'REQUEST_METHOD' => HttpMethod::GET,
-            'CONTENT_TYPE' => MimeType::APPLICATION_JSON,
-            'ACCEPT' => MimeType::APPLICATION_JSON,
-        ];
-        $request = new Request([], [], [], [], [], $serverAttributes);
-        $request->attributes->add(
-            [
+        $request = new Request(
+            attributes: [
                 CustomRequestAttributes::ROUTE_CALLED => true,
-                CustomRequestAttributes::RESPONSE_CONTENT_TYPE => MimeType::APPLICATION_JSON,
-                CustomRequestAttributes::RESPONSE_FORMAT => $request->getFormat(MimeType::APPLICATION_JSON),
+                CustomRequestAttributes::RESPONSE_CONTENT_TYPE => MimeType::APPLICATION_JSON->value,
                 CustomRequestAttributes::RESPONSE_SERIALIZATION_GROUPS => ['Default'],
+            ],
+            server: [
+                'REQUEST_METHOD' => HttpMethod::GET->value,
+                'CONTENT_TYPE' => MimeType::APPLICATION_JSON->value,
+                'ACCEPT' => MimeType::APPLICATION_JSON->value,
             ]
+        );
+
+        $request->attributes->set(
+            key: CustomRequestAttributes::RESPONSE_FORMAT,
+            value: $request->getFormat(MimeType::APPLICATION_JSON->value)
         );
 
         $this->serializerMock
@@ -130,7 +135,7 @@ class ViewListenerTest extends TestCase
             ->willThrowException(new \Exception());
 
         $this->viewListener->onKernelView(
-            new ViewEvent($this->kernelMock, $request, HttpKernelInterface::MASTER_REQUEST, $testObject)
+            new ViewEvent($this->kernelMock, $request, HttpKernelInterface::MAIN_REQUEST, $testObject)
         );
     }
 
@@ -138,56 +143,52 @@ class ViewListenerTest extends TestCase
     public function onKernelViewRenderErrorTest(): void
     {
         $this->expectException(HttpException::class);
-        $this->expectExceptionCode(HttpResponseStatus::HTTP_INTERNAL_SERVER_ERROR);
+        $this->expectExceptionCode(HttpResponseStatus::HTTP_INTERNAL_SERVER_ERROR->value);
 
         $testObject = (new TestObject())->setTestProperty('test')->setTestProperty2(2);
 
-        $serverAttributes = [
-            'REQUEST_METHOD' => HttpMethod::POST,
-            'CONTENT_TYPE' => MimeType::APPLICATION_JSON,
-            'ACCEPT' => MimeType::TEXT_HTML,
-        ];
-        $request = new Request([], [], [], [], [], $serverAttributes);
-        $request->attributes->add(
-            [
+        $request = new Request(
+            attributes: [
                 CustomRequestAttributes::ROUTE_CALLED => true,
-                CustomRequestAttributes::RESPONSE_CONTENT_TYPE => MimeType::TEXT_HTML,
-                CustomRequestAttributes::RESPONSE_FORMAT => $request->getFormat(MimeType::APPLICATION_JSON),
+                CustomRequestAttributes::RESPONSE_CONTENT_TYPE => MimeType::TEXT_HTML->value,
                 CustomRequestAttributes::RESPONSE_SERIALIZATION_GROUPS => ['Default'],
+            ],
+            server: [
+                'REQUEST_METHOD' => HttpMethod::POST->value,
+                'CONTENT_TYPE' => MimeType::APPLICATION_JSON->value,
+                'ACCEPT' => MimeType::TEXT_HTML->value,
             ]
         );
 
-        $json = <<<JSON
-            {
-                "testProperty": "%s",
-                "testProperty2": %d
-            }
-        JSON;
+        $request->attributes->set(
+            key: CustomRequestAttributes::RESPONSE_FORMAT,
+            value: $request->getFormat(MimeType::APPLICATION_JSON->value)
+        );
+
+        $json = vsprintf(
+            format:  <<<JSON
+                {
+                    "testProperty": "%s",
+                    "testProperty2": %d
+                }
+            JSON,
+            values: [$testObject->getTestProperty(), $testObject->getTestProperty2()]
+        );
 
         $this->serializerMock
             ->expects(static::once())
             ->method('serialize')
             ->with($testObject, 'json', static::isInstanceOf(SerializationContext::class))
-            ->willReturn(sprintf($json, $testObject->getTestProperty(), $testObject->getTestProperty2()));
+            ->willReturn($json);
 
         $this->twigMock
             ->expects(static::once())
             ->method('render')
-            ->with(
-                '@ItspireFrameworkExtra/response.html.twig',
-                [
-                    'controllerResult' => sprintf(
-                        $json,
-                        $testObject->getTestProperty(),
-                        $testObject->getTestProperty2()
-                    ),
-                    'format' => 'json',
-                ]
-            )
+            ->with('@ItspireFrameworkExtra/response.html.twig', ['controllerResult' => $json, 'format' => 'json'])
             ->willThrowException(new \Exception());
 
         $this->viewListener->onKernelView(
-            new ViewEvent($this->kernelMock, $request, HttpKernelInterface::MASTER_REQUEST, $testObject)
+            new ViewEvent($this->kernelMock, $request, HttpKernelInterface::MAIN_REQUEST, $testObject)
         );
     }
 
@@ -210,19 +211,22 @@ class ViewListenerTest extends TestCase
             </html>
         HTML;
 
-        $serverAttributes = [
-            'REQUEST_METHOD' => HttpMethod::GET,
-            'CONTENT_TYPE' => MimeType::APPLICATION_JSON,
-            'ACCEPT' => MimeType::TEXT_HTML,
-        ];
-        $request = new Request([], [], [], [], [], $serverAttributes);
-        $request->attributes->add(
-            [
+        $request = new Request(
+            attributes: [
                 CustomRequestAttributes::ROUTE_CALLED => true,
-                CustomRequestAttributes::RESPONSE_CONTENT_TYPE => MimeType::TEXT_HTML,
-                CustomRequestAttributes::RESPONSE_FORMAT => $request->getFormat(MimeType::APPLICATION_JSON),
+                CustomRequestAttributes::RESPONSE_CONTENT_TYPE => MimeType::TEXT_HTML->value,
                 CustomRequestAttributes::RESPONSE_SERIALIZATION_GROUPS => ['Default'],
+            ],
+            server: [
+                'REQUEST_METHOD' => HttpMethod::GET->value,
+                'CONTENT_TYPE' => MimeType::APPLICATION_JSON->value,
+                'ACCEPT' => MimeType::TEXT_HTML->value,
             ]
+        );
+
+        $request->attributes->set(
+            key: CustomRequestAttributes::RESPONSE_FORMAT,
+            value: $request->getFormat(MimeType::APPLICATION_JSON->value)
         );
 
         $this->serializerMock
@@ -234,18 +238,18 @@ class ViewListenerTest extends TestCase
         $this->twigMock
             ->expects(static::once())
             ->method('render')
-            ->with(
-                '@ItspireFrameworkExtra/response.html.twig',
-                ['controllerResult' => $testJson, 'format' => 'json']
-            )
+            ->with('@ItspireFrameworkExtra/response.html.twig', ['controllerResult' => $testJson, 'format' => 'json'])
             ->willReturn($html);
 
-        $event = new ViewEvent($this->kernelMock, $request, HttpKernelInterface::MASTER_REQUEST, $testArray);
+        $event = new ViewEvent($this->kernelMock, $request, HttpKernelInterface::MAIN_REQUEST, $testArray);
 
         $this->viewListener->onKernelView($event);
 
-        static::assertEquals(HttpResponseStatus::HTTP_OK, $event->getResponse()->getStatusCode());
-        static::assertEquals($html, $event->getResponse()->getContent());
+        static::assertEquals(
+            expected: HttpResponseStatus::HTTP_OK->value,
+            actual: $event->getResponse()->getStatusCode()
+        );
+        static::assertEquals(expected: $html, actual: $event->getResponse()->getContent());
     }
 
     /** @test */
@@ -260,19 +264,22 @@ class ViewListenerTest extends TestCase
             }
         JSON;
 
-        $serverAttributes = [
-            'REQUEST_METHOD' => HttpMethod::GET,
-            'CONTENT_TYPE' => MimeType::APPLICATION_JSON,
-            'ACCEPT' => MimeType::APPLICATION_JSON,
-        ];
-        $request = new Request([], [], [], [], [], $serverAttributes);
-        $request->attributes->add(
-            [
+        $request = new Request(
+            attributes: [
                 CustomRequestAttributes::ROUTE_CALLED => true,
-                CustomRequestAttributes::RESPONSE_CONTENT_TYPE => MimeType::APPLICATION_JSON,
-                CustomRequestAttributes::RESPONSE_FORMAT => $request->getFormat(MimeType::APPLICATION_JSON),
+                CustomRequestAttributes::RESPONSE_CONTENT_TYPE => MimeType::APPLICATION_JSON->value,
                 CustomRequestAttributes::RESPONSE_SERIALIZATION_GROUPS => ['Default'],
+            ],
+            server: [
+                'REQUEST_METHOD' => HttpMethod::GET->value,
+                'CONTENT_TYPE' => MimeType::APPLICATION_JSON->value,
+                'ACCEPT' => MimeType::APPLICATION_JSON->value,
             ]
+        );
+
+        $request->attributes->set(
+            key: CustomRequestAttributes::RESPONSE_FORMAT,
+            value: $request->getFormat(MimeType::APPLICATION_JSON->value)
         );
 
         $this->serializerMock
@@ -281,38 +288,36 @@ class ViewListenerTest extends TestCase
             ->with($testArray, 'json', static::isInstanceOf(SerializationContext::class))
             ->willReturn($testJson);
 
-//        $this->twigMock
-//            ->expects(static::once())
-//            ->method('render')
-//            ->with(
-//                '@ItspireFrameworkExtra/response.html.twig',
-//                ['controllerResult' => $testJson, 'format' => 'json']
-//            )
-//            ->willReturn($html);
-
-        $event = new ViewEvent($this->kernelMock, $request, HttpKernelInterface::MASTER_REQUEST, $testArray);
+        $event = new ViewEvent($this->kernelMock, $request, HttpKernelInterface::MAIN_REQUEST, $testArray);
 
         $this->viewListener->onKernelView($event);
 
-        static::assertEquals(HttpResponseStatus::HTTP_OK, $event->getResponse()->getStatusCode());
-        static::assertEquals($testJson, $event->getResponse()->getContent());
+        static::assertEquals(
+            expected: HttpResponseStatus::HTTP_OK->value,
+            actual: $event->getResponse()->getStatusCode()
+        );
+        static::assertEquals(expected: $testJson, actual: $event->getResponse()->getContent());
     }
 
     /** @test */
     public function onKernelViewNoContentTest(): void
     {
-        $serverAttributes = [
-            'REQUEST_METHOD' => HttpMethod::DELETE,
-            'CONTENT_TYPE' => MimeType::APPLICATION_JSON,
-            'ACCEPT' => MimeType::APPLICATION_JSON,
-        ];
-        $request = new Request([], [], [], [], [], $serverAttributes);
-        $request->attributes->add([CustomRequestAttributes::ROUTE_CALLED => true]);
+        $request = new Request(
+            attributes: [CustomRequestAttributes::ROUTE_CALLED => true],
+            server: [
+                'REQUEST_METHOD' => HttpMethod::DELETE->value,
+                'CONTENT_TYPE' => MimeType::APPLICATION_JSON->value,
+                'ACCEPT' => MimeType::APPLICATION_JSON->value,
+            ]
+        );
 
-        $event = new ViewEvent($this->kernelMock, $request, HttpKernelInterface::MASTER_REQUEST, null);
+        $event = new ViewEvent($this->kernelMock, $request, HttpKernelInterface::MAIN_REQUEST, null);
 
         $this->viewListener->onKernelView($event);
 
-        static::assertEquals(HttpResponseStatus::HTTP_NO_CONTENT, $event->getResponse()->getStatusCode());
+        static::assertEquals(
+            expected: HttpResponseStatus::HTTP_NO_CONTENT->value,
+            actual: $event->getResponse()->getStatusCode()
+        );
     }
 }

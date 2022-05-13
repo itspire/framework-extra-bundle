@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2016 - 2020 Itspire.
+ * Copyright (c) 2016 - 2022 Itspire.
  * This software is licensed under the BSD-3-Clause license. (see LICENSE.md for full license)
  * All Right Reserved.
  */
@@ -12,7 +12,9 @@ namespace Itspire\FrameworkExtraBundle\Tests\Unit\Util\Strategy\TypeCheck\Proces
 
 use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
-use Itspire\FrameworkExtraBundle\Annotation\QueryParam;
+use Itspire\FrameworkExtraBundle\Annotation\QueryParam as QueryParamAnnotation;
+use Itspire\FrameworkExtraBundle\Attribute\ParamAttributeInterface;
+use Itspire\FrameworkExtraBundle\Attribute\QueryParam as QueryParamAttribute;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\Processor\StringProcessor;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -54,44 +56,52 @@ class StringProcessorTest extends TestCase
      */
     public function supportsTest($type, $result): void
     {
-        static::assertEquals($result, $this->stringProcessor->supports($type));
+        static::assertEquals(expected: $result, actual: $this->stringProcessor->supports($type));
     }
 
-    /** @test */
-    public function processUnsupportedTest(): void
+    public function annotationOrAttributeProvider(): array
     {
-        $exceptionDefinition = new HttpExceptionDefinition(HttpExceptionDefinition::HTTP_BAD_REQUEST);
+        return [
+            'paramAnnotation' => [new QueryParamAnnotation(name: 'param', type: 'string')],
+            'paramAttribute' => [new QueryParamAttribute(name: 'param', type: 'string')],
+        ];
+    }
+
+    /**
+     * @test
+     * @dataProvider annotationOrAttributeProvider
+     */
+    public function processUnsupportedTest(ParamAttributeInterface $paramAttribute): void
+    {
+        $exceptionDefinition = HttpExceptionDefinition::HTTP_BAD_REQUEST;
 
         $this->expectException(HttpException::class);
-        $this->expectExceptionCode($exceptionDefinition->getValue());
+        $this->expectExceptionCode($exceptionDefinition->value);
         $this->expectExceptionMessage($exceptionDefinition->getDescription());
 
-        $annotation = new QueryParam(['name' => 'param']);
-
-        $request = new Request();
-        $request->attributes->set('_route', 'test');
+        $request = new Request(attributes: ['_route' => 'test']);
 
         $this->loggerMock
             ->expects(static::once())
             ->method('alert')
-            ->with(
-                sprintf(
-                    'Invalid value type integer provided for parameter %s on route %s : expected one of %s.',
-                    $annotation->getName(),
-                    $request->attributes->get('_route'),
-                    implode(', ', $this->stringProcessor->getTypes())
-                )
-            );
+            ->with('Invalid value type integer provided for parameter param on route test : expected one of string.');
 
-        $this->stringProcessor->process($annotation, $request, 1);
+        $this->stringProcessor->process(paramAttribute: $paramAttribute, request: $request, value: 1);
     }
 
-    /** @test */
-    public function processTest(): void
+    /**
+     * @test
+     * @dataProvider annotationOrAttributeProvider
+     */
+    public function processTest(ParamAttributeInterface $paramAttribute): void
     {
         static::assertEquals(
-            '111',
-            $this->stringProcessor->process(new QueryParam(['name' => 'param']), new Request(), '111')
+            expected: '111',
+            actual: $this->stringProcessor->process(
+                paramAttribute: $paramAttribute,
+                request: new Request(),
+                value: '111'
+            )
         );
     }
 }
