@@ -12,7 +12,7 @@
         }
     ],
     "require": {
-        "php": ">=7.4",
+        "php": "~7.4",
         "ext-json": "*",
         "ext-xml": "*",
         "doctrine/common": "~3.1",
@@ -21,11 +21,13 @@
         "psr/log": "~1.1",
         "sensio/framework-extra-bundle": "~5.6",
         "symfony/browser-kit": "~4.4",
+        "symfony/config": "~4.4",
         "symfony/expression-language": "~4.4",
         "symfony/framework-bundle": "~4.4",
         "symfony/http-foundation": "~4.4",
         "symfony/mime": "~4.4",
         "symfony/psr-http-message-bridge": "~2.0",
+        "symfony/routing": "~4.4",
         "symfony/security-bundle": "~4.4",
         "symfony/twig-bundle": "~4.4",
         "symfony/web-profiler-bundle": "~4.4",
@@ -47,6 +49,11 @@
         "psr-4": {
             "Itspire\\FrameworkExtraBundle\\Tests\\TestApp\\": "src/test/php/TestApp/src",
             "Itspire\\FrameworkExtraBundle\\Tests\\": "src/test/php"
+        }
+    },
+    "config": {
+        "platform": {
+            "php": "7.4"
         }
     }
 }

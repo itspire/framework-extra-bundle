@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright (c) 2016 - 2020 Itspire.
+  ~ Copyright (c) 2016 - 2022 Itspire.
   ~ This software is licensed under the BSD-3-Clause license. (see LICENSE.md for full license)
   ~ All Right Reserved.
   -->
@@ -37,7 +37,7 @@
 
     <php>
         <env name="SYMFONY_PHPUNIT_VERSION" value="9.1" />
-        <env name="SYMFONY_DEPRECATIONS_HELPER" value="53" />
+        <env name="SYMFONY_DEPRECATIONS_HELPER" value="1" />
         <server name="KERNEL_CLASS" value="Itspire\FrameworkExtraBundle\Tests\TestApp\Kernel" />
         <server name="APP_ENV" value="test" force="true" />
     </php>
