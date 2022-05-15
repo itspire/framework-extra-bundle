@@ -41,15 +41,6 @@ class Consumes implements AttributeInterface
     private function setConsumableContentTypes(mixed $consumableContentTypes): self
     {
         if (!is_array($consumableContentTypes)) {
-            trigger_deprecation(
-                package: 'itspire/framework-extra-bundle',
-                version: '2.0',
-                message: sprintf(
-                    'Passing anything other than an array to the consumableContentTypes property of "%s" is deprecated'
-                    . ' and will trigger a TypeError in 3.0',
-                    self::class
-                )
-            );
             $consumableContentTypes = [$consumableContentTypes];
         }
 
@@ -69,15 +60,6 @@ class Consumes implements AttributeInterface
     private function setDeserializationGroups(mixed $deserializationGroups): self
     {
         if (!is_array($deserializationGroups)) {
-            trigger_deprecation(
-                package: 'itspire/framework-extra-bundle',
-                version: '2.0',
-                message: sprintf(
-                    'Passing anything other than an array to the deserializationGroups property of "%s" is deprecated'
-                    . ' and will trigger a TypeError in 3.0',
-                    self::class
-                )
-            );
             $deserializationGroups = [$deserializationGroups];
         }
 

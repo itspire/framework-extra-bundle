@@ -23,15 +23,12 @@ use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor\ConsumesProce
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use Symfony\Bridge\PhpUnit\ExpectDeprecationTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 
 class ConsumesProcessorTest extends TestCase
 {
-    use ExpectDeprecationTrait;
-
     protected MockObject | LoggerInterface | null $loggerMock = null;
     protected MockObject | MimeType | null $mimeTypeMatcherMock = null;
     protected ?ConsumesProcessor $consumesProcessor = null;
@@ -66,10 +63,7 @@ class ConsumesProcessorTest extends TestCase
         static::assertEquals(expected: $result, actual: $this->consumesProcessor->supports($attribute));
     }
 
-    /**
-     * @test
-     * @group legacy
-     */
+    /** @test */
     public function processAlreadyProcessedTest(): void
     {
         $exceptionDefinition = HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR;
@@ -77,11 +71,6 @@ class ConsumesProcessorTest extends TestCase
         $this->expectException(HttpException::class);
         $this->expectExceptionCode($exceptionDefinition->value);
         $this->expectExceptionMessage($exceptionDefinition->getDescription());
-        $this->expectDeprecation(
-            'Since itspire/framework-extra-bundle 2.0:'
-            . ' Passing anything other than an array to the consumableContentTypes property of "%s" is deprecated'
-            . ' and will trigger a TypeError in 3.0'
-        );
 
         $consumes = $this->getConsumes(MimeType::APPLICATION_XML);
         $request = new Request(attributes: [CustomRequestAttributes::CONSUMES_PROCESSED => true]);
