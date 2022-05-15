@@ -12,9 +12,7 @@ namespace Itspire\FrameworkExtraBundle\Tests\Unit\Util\Strategy\TypeCheck\Proces
 
 use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
-use Itspire\FrameworkExtraBundle\Annotation\QueryParam as QueryParamAnnotation;
-use Itspire\FrameworkExtraBundle\Attribute\ParamAttributeInterface;
-use Itspire\FrameworkExtraBundle\Attribute\QueryParam as QueryParamAttribute;
+use Itspire\FrameworkExtraBundle\Attribute\QueryParam;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\Processor\BooleanProcessor;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -23,13 +21,11 @@ use Symfony\Component\HttpFoundation\Request;
 
 class BooleanProcessorTest extends TestCase
 {
-    private ?MockObject $loggerMock = null;
+    private MockObject | LoggerInterface | null $loggerMock = null;
     private ?BooleanProcessor $booleanProcessor = null;
 
     protected function setUp(): void
     {
-        parent::setUp();
-
         $this->loggerMock = $this->getMockBuilder(LoggerInterface::class)->getMock();
 
         $this->booleanProcessor = new BooleanProcessor($this->loggerMock);
@@ -37,9 +33,7 @@ class BooleanProcessorTest extends TestCase
 
     protected function tearDown(): void
     {
-        unset($this->loggerMock, $this->booleanProcessor);
-
-        parent::tearDown();
+        unset($this->booleanProcessor, $this->loggerMock);
     }
 
     public function supportsProvider(): array
@@ -60,19 +54,8 @@ class BooleanProcessorTest extends TestCase
         static::assertEquals(expected: $result, actual: $this->booleanProcessor->supports($type));
     }
 
-    public function annotationOrAttributeProvider(): array
-    {
-        return [
-            'paramAnnotation' => [new QueryParamAnnotation(name: 'param', type: 'bool')],
-            'paramAttribute' => [new QueryParamAttribute(name: 'param', type: 'boolean')],
-        ];
-    }
-
-    /**
-     * @test
-     * @dataProvider annotationOrAttributeProvider
-     */
-    public function processUnsupportedTest(ParamAttributeInterface $paramAttribute): void
+    /** @test */
+    public function processUnsupportedTest(): void
     {
         $exceptionDefinition = HttpExceptionDefinition::HTTP_BAD_REQUEST;
 
@@ -80,6 +63,7 @@ class BooleanProcessorTest extends TestCase
         $this->expectExceptionCode($exceptionDefinition->value);
         $this->expectExceptionMessage($exceptionDefinition->getDescription());
 
+        $paramAttribute = new QueryParam(name: 'param', type: 'boolean');
         $request = new Request(attributes: ['_route' => 'test']);
 
         $this->loggerMock
@@ -92,12 +76,11 @@ class BooleanProcessorTest extends TestCase
         $this->booleanProcessor->process($paramAttribute, $request, 'test');
     }
 
-    /**
-     * @test
-     * @dataProvider annotationOrAttributeProvider
-     */
-    public function processTest(ParamAttributeInterface $paramAttribute): void
+    /** @test */
+    public function processTest(): void
     {
+        $paramAttribute = new QueryParam(name: 'param', type: 'boolean');
+
         // truthy values
         foreach ([1, '1', true, 'true'] as $truthyValue) {
             static::assertEquals(

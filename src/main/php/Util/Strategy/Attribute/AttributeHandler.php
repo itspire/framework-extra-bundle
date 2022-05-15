@@ -12,13 +12,12 @@ namespace Itspire\FrameworkExtraBundle\Util\Strategy\Attribute;
 
 use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
-use Itspire\FrameworkExtraBundle\Annotation\AnnotationInterface;
 use Itspire\FrameworkExtraBundle\Attribute\AttributeInterface;
 use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor\BodyParamProcessor;
 use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor\ConsumesProcessor;
 use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor\ProducesProcessor;
 use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor\RouteProcessor;
-use Itspire\FrameworkExtraBundle\Util\Strategy\ProcessorInterface;
+use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor\AttributeProcessorInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 
@@ -31,10 +30,10 @@ class AttributeHandler implements AttributeHandlerInterface
         BodyParamProcessor::class,
     ];
 
-    /** @var ProcessorInterface[] */
+    /** @var AttributeProcessorInterface[] */
     protected array $processors = [];
 
-    /** @var ProcessorInterface[] */
+    /** @var AttributeProcessorInterface[] */
     protected array $prioritizedProcessors = [];
 
     public function __construct(protected LoggerInterface $logger, iterable $processors = [])
@@ -44,7 +43,7 @@ class AttributeHandler implements AttributeHandlerInterface
         }
     }
 
-    public function registerProcessor(ProcessorInterface $attributeProcessor): self
+    public function registerProcessor(AttributeProcessorInterface $attributeProcessor): self
     {
         $isPrioritized = false;
 
@@ -87,12 +86,8 @@ class AttributeHandler implements AttributeHandlerInterface
 
         $this->logger->error(
             vsprintf(
-                format: 'No processor found for %s of class %s called in %s::process.',
-                values: [
-                    $attribute instanceof AnnotationInterface ? 'annotation' : 'attribute',
-                    $attribute::class,
-                    static::class,
-                ]
+                format: 'No processor found for attribute of class %s called in %s::process.',
+                values: [$attribute::class, static::class]
             )
         );
 
@@ -101,7 +96,7 @@ class AttributeHandler implements AttributeHandlerInterface
 
     private function handleProcess(
         ControllerEvent $event,
-        ProcessorInterface $processor,
+        AttributeProcessorInterface $processor,
         AttributeInterface $attribute
     ): bool {
         if (false === $processor->supports($attribute)) {

@@ -10,8 +10,12 @@ declare(strict_types=1);
 
 namespace Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor;
 
-use Itspire\FrameworkExtraBundle\Util\Strategy\ProcessorInterface;
+use Itspire\FrameworkExtraBundle\Attribute\AttributeInterface;
+use Symfony\Component\HttpKernel\Event\ControllerEvent;
 
-interface AttributeProcessorInterface extends ProcessorInterface
+interface AttributeProcessorInterface
 {
+    public function process(ControllerEvent $event, AttributeInterface $attribute): void;
+
+    public function supports(AttributeInterface $attribute): bool;
 }

@@ -12,9 +12,7 @@ namespace Itspire\FrameworkExtraBundle\Tests\Unit\Util\Strategy\TypeCheck\Proces
 
 use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
-use Itspire\FrameworkExtraBundle\Annotation\QueryParam as QueryParamAnnotation;
-use Itspire\FrameworkExtraBundle\Attribute\ParamAttributeInterface;
-use Itspire\FrameworkExtraBundle\Attribute\QueryParam as QueryParamAttribute;
+use Itspire\FrameworkExtraBundle\Attribute\QueryParam;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\Processor\IntegerProcessor;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -23,13 +21,11 @@ use Symfony\Component\HttpFoundation\Request;
 
 class IntegerProcessorTest extends TestCase
 {
-    private ?MockObject $loggerMock = null;
+    private MockObject | LoggerInterface | null $loggerMock = null;
     private ?IntegerProcessor $integerProcessor = null;
 
     protected function setUp(): void
     {
-        parent::setUp();
-
         $this->loggerMock = $this->getMockBuilder(LoggerInterface::class)->getMock();
 
         $this->integerProcessor = new IntegerProcessor($this->loggerMock);
@@ -37,9 +33,7 @@ class IntegerProcessorTest extends TestCase
 
     protected function tearDown(): void
     {
-        unset($this->loggerMock, $this->integerProcessor);
-
-        parent::tearDown();
+        unset($this->integerProcessor, $this->loggerMock);
     }
 
     public function supportsProvider(): array
@@ -60,19 +54,8 @@ class IntegerProcessorTest extends TestCase
         static::assertEquals(expected: $result, actual: $this->integerProcessor->supports($type));
     }
 
-    public function annotationOrAttributeProvider(): array
-    {
-        return [
-            'paramAnnotation' => [new QueryParamAnnotation(name: 'param', type: 'integer')],
-            'paramAttribute' => [new QueryParamAttribute(name: 'param', type: 'integer')],
-        ];
-    }
-
-    /**
-     * @test
-     * @dataProvider annotationOrAttributeProvider
-     */
-    public function processUnsupportedTest(ParamAttributeInterface $paramAttribute): void
+    /** @test */
+    public function processUnsupportedTest(): void
     {
         $exceptionDefinition = HttpExceptionDefinition::HTTP_BAD_REQUEST;
 
@@ -80,6 +63,7 @@ class IntegerProcessorTest extends TestCase
         $this->expectExceptionCode($exceptionDefinition->value);
         $this->expectExceptionMessage($exceptionDefinition->getDescription());
 
+        $paramAttribute = new QueryParam(name: 'param', type: 'integer');
         $request = new Request(attributes: ['_route' => 'test']);
 
         $this->loggerMock
@@ -92,12 +76,11 @@ class IntegerProcessorTest extends TestCase
         $this->integerProcessor->process($paramAttribute, $request, 'test');
     }
 
-    /**
-     * @test
-     * @dataProvider annotationOrAttributeProvider
-     */
-    public function processTest(ParamAttributeInterface $paramAttribute): void
+    /** @test */
+    public function processTest(): void
     {
+        $paramAttribute = new QueryParam(name: 'param', type: 'integer');
+
         static::assertEquals(
             expected: 1,
             actual: $this->integerProcessor->process($paramAttribute, new Request(), 1)

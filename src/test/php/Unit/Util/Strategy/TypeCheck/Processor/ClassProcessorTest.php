@@ -12,9 +12,7 @@ namespace Itspire\FrameworkExtraBundle\Tests\Unit\Util\Strategy\TypeCheck\Proces
 
 use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
-use Itspire\FrameworkExtraBundle\Annotation\BodyParam as BodyParamAnnotation;
-use Itspire\FrameworkExtraBundle\Attribute\BodyParam as BodyParamAttribute;
-use Itspire\FrameworkExtraBundle\Attribute\ParamAttributeInterface;
+use Itspire\FrameworkExtraBundle\Attribute\BodyParam;
 use Itspire\FrameworkExtraBundle\Tests\TestApp\Model\TestObject;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\Processor\ClassProcessor;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -24,13 +22,11 @@ use Symfony\Component\HttpFoundation\Request;
 
 class ClassProcessorTest extends TestCase
 {
-    private ?MockObject $loggerMock = null;
+    private MockObject | LoggerInterface | null $loggerMock = null;
     private ?ClassProcessor $classProcessor = null;
 
     protected function setUp(): void
     {
-        parent::setUp();
-
         $this->loggerMock = $this->getMockBuilder(LoggerInterface::class)->getMock();
 
         $this->classProcessor = new ClassProcessor($this->loggerMock);
@@ -38,9 +34,7 @@ class ClassProcessorTest extends TestCase
 
     protected function tearDown(): void
     {
-        unset($this->loggerMock, $this->classProcessor);
-
-        parent::tearDown();
+        unset($this->classProcessor, $this->loggerMock);
     }
 
     public function supportsProvider(): array
@@ -60,21 +54,8 @@ class ClassProcessorTest extends TestCase
         static::assertEquals(expected: $result, actual: $this->classProcessor->supports($type));
     }
 
-    public function annotationOrAttributeProvider(): array
-    {
-        return [
-            'paramAnnotation' => [
-                new BodyParamAnnotation(name: 'param', type: 'class', class: TestObject::class),
-            ],
-            'paramAttribute' => [new BodyParamAttribute(name: 'param', type: 'class', class: TestObject::class)],
-        ];
-    }
-
-    /**
-     * @test
-     * @dataProvider annotationOrAttributeProvider
-     */
-    public function processUnsupportedTest(ParamAttributeInterface $paramAttribute): void
+    /** @test */
+    public function processUnsupportedTest(): void
     {
         $exceptionDefinition = HttpExceptionDefinition::HTTP_BAD_REQUEST;
 
@@ -82,6 +63,7 @@ class ClassProcessorTest extends TestCase
         $this->expectExceptionCode($exceptionDefinition->value);
         $this->expectExceptionMessage($exceptionDefinition->getDescription());
 
+        $paramAttribute = new BodyParam(name: 'param', type: 'class', class: TestObject::class);
         $request = new Request(attributes: ['_route' => 'test']);
 
         $this->loggerMock
@@ -97,12 +79,11 @@ class ClassProcessorTest extends TestCase
         $this->classProcessor->process($paramAttribute, $request, 1);
     }
 
-    /**
-     * @test
-     * @dataProvider annotationOrAttributeProvider
-     */
-    public function processTest(ParamAttributeInterface $paramAttribute): void
+    /** @test */
+    public function processTest(): void
     {
+        $paramAttribute = new BodyParam(name: 'param', type: 'class', class: TestObject::class);
+
         static::assertEquals(
             '<testObject testProperty="test" testProperty2=2></testObject>',
             $this->classProcessor->process(

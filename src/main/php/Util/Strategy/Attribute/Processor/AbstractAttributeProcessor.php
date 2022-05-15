@@ -17,7 +17,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 
-abstract class AbstractAttributeProcessor
+abstract class AbstractAttributeProcessor implements AttributeProcessorInterface
 {
     public function __construct(protected LoggerInterface $logger)
     {

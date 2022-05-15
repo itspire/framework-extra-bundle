@@ -12,9 +12,7 @@ namespace Itspire\FrameworkExtraBundle\Tests\Unit\Util\Strategy\TypeCheck\Proces
 
 use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
-use Itspire\FrameworkExtraBundle\Annotation\QueryParam as QueryParamAnnotation;
-use Itspire\FrameworkExtraBundle\Attribute\ParamAttributeInterface;
-use Itspire\FrameworkExtraBundle\Attribute\QueryParam as QueryParamAttribute;
+use Itspire\FrameworkExtraBundle\Attribute\QueryParam;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\Processor\StringProcessor;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -23,13 +21,11 @@ use Symfony\Component\HttpFoundation\Request;
 
 class StringProcessorTest extends TestCase
 {
-    private ?MockObject $loggerMock = null;
+    private MockObject | LoggerInterface | null $loggerMock = null;
     private ?StringProcessor $stringProcessor = null;
 
     protected function setUp(): void
     {
-        parent::setUp();
-
         $this->loggerMock = $this->getMockBuilder(LoggerInterface::class)->getMock();
 
         $this->stringProcessor = new StringProcessor($this->loggerMock);
@@ -37,9 +33,7 @@ class StringProcessorTest extends TestCase
 
     protected function tearDown(): void
     {
-        unset($this->loggerMock, $this->stringProcessor);
-
-        parent::tearDown();
+        unset($this->stringProcessor, $this->loggerMock);
     }
 
     public function supportsProvider(): array
@@ -59,19 +53,8 @@ class StringProcessorTest extends TestCase
         static::assertEquals(expected: $result, actual: $this->stringProcessor->supports($type));
     }
 
-    public function annotationOrAttributeProvider(): array
-    {
-        return [
-            'paramAnnotation' => [new QueryParamAnnotation(name: 'param', type: 'string')],
-            'paramAttribute' => [new QueryParamAttribute(name: 'param', type: 'string')],
-        ];
-    }
-
-    /**
-     * @test
-     * @dataProvider annotationOrAttributeProvider
-     */
-    public function processUnsupportedTest(ParamAttributeInterface $paramAttribute): void
+    /** @test */
+    public function processUnsupportedTest(): void
     {
         $exceptionDefinition = HttpExceptionDefinition::HTTP_BAD_REQUEST;
 
@@ -79,6 +62,7 @@ class StringProcessorTest extends TestCase
         $this->expectExceptionCode($exceptionDefinition->value);
         $this->expectExceptionMessage($exceptionDefinition->getDescription());
 
+        $paramAttribute = new QueryParam(name: 'param', type: 'string');
         $request = new Request(attributes: ['_route' => 'test']);
 
         $this->loggerMock
@@ -89,12 +73,11 @@ class StringProcessorTest extends TestCase
         $this->stringProcessor->process(paramAttribute: $paramAttribute, request: $request, value: 1);
     }
 
-    /**
-     * @test
-     * @dataProvider annotationOrAttributeProvider
-     */
-    public function processTest(ParamAttributeInterface $paramAttribute): void
+    /** @test */
+    public function processTest(): void
     {
+        $paramAttribute = new QueryParam(name: 'param', type: 'string');
+
         static::assertEquals(
             expected: '111',
             actual: $this->stringProcessor->process(

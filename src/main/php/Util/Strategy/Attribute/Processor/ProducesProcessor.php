@@ -20,7 +20,7 @@ use Itspire\FrameworkExtraBundle\Util\MimeTypeMatcherInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 
-class ProducesProcessor extends AbstractAttributeProcessor implements AttributeProcessorInterface
+class ProducesProcessor extends AbstractAttributeProcessor
 {
     public function __construct(
         private MimeTypeMatcherInterface $mimeTypeMatcher,

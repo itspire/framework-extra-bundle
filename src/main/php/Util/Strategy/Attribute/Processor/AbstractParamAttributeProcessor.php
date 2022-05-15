@@ -12,10 +12,13 @@ namespace Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor;
 
 use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
-use Itspire\FrameworkExtraBundle\Annotation as Annotations;
-use Itspire\FrameworkExtraBundle\Attribute as Attributes;
 use Itspire\FrameworkExtraBundle\Attribute\AttributeInterface;
+use Itspire\FrameworkExtraBundle\Attribute\BodyParam;
+use Itspire\FrameworkExtraBundle\Attribute\FileParam;
+use Itspire\FrameworkExtraBundle\Attribute\HeaderParam;
 use Itspire\FrameworkExtraBundle\Attribute\ParamAttributeInterface;
+use Itspire\FrameworkExtraBundle\Attribute\QueryParam;
+use Itspire\FrameworkExtraBundle\Attribute\RequestParam;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\TypeCheckHandlerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -52,33 +55,25 @@ abstract class AbstractParamAttributeProcessor extends AbstractAttributeProcesso
         $this->validateValue($attribute, $event, $paramValue);
     }
 
-    protected function getParamValue(Request $request, ParamAttributeInterface $paramAttribute): mixed
+    protected function getParamValue(Request $request, ParamAttributeInterface $attribute): mixed
     {
-        return match ($paramAttribute::class) {
-            Annotations\BodyParam::class,
-            Attributes\BodyParam::class => $request->getContent() ?: null,
-            Annotations\FileParam::class,
-            Attributes\FileParam::class => $request->files->get(
-                key: $paramAttribute->getName(),
-                default: null
+        return match ($attribute::class) {
+            BodyParam::class => $request->getContent() ?: null,
+            FileParam::class => $request->files->get(key: $attribute->getName(), default: null),
+            HeaderParam::class => $request->headers->get(
+                key: $attribute->getHeaderName(),
+                default: $attribute->getDefault()
             ),
-            Annotations\HeaderParam::class,
-            Attributes\HeaderParam::class => $request->headers->get(
-                key: $paramAttribute->getHeaderName(),
-                default: $paramAttribute->getDefault()
-            ),
-            Annotations\QueryParam::class,
-            Attributes\QueryParam::class => $request->query->has($paramAttribute->getName())
-                ? $request->query->all()[$paramAttribute->getName()]
-                : $paramAttribute->getDefault(),
-            Annotations\RequestParam::class,
-            Attributes\RequestParam::class => $request->request->has($paramAttribute->getName())
-                ? $request->request->all()[$paramAttribute->getName()]
-                : $paramAttribute->getDefault(),
+            QueryParam::class => $request->query->has($attribute->getName())
+                ? $request->query->all()[$attribute->getName()]
+                : $attribute->getDefault(),
+            RequestParam::class => $request->request->has($attribute->getName())
+                ? $request->request->all()[$attribute->getName()]
+                : $attribute->getDefault(),
         };
     }
 
-    protected function checkForConflictingNames(Request $request, ParamAttributeInterface $attribute): void
+    private function checkForConflictingNames(Request $request, ParamAttributeInterface $attribute): void
     {
         if (true === $request->attributes->has($attribute->getName())) {
             $this->logger->error(
@@ -92,27 +87,19 @@ abstract class AbstractParamAttributeProcessor extends AbstractAttributeProcesso
         }
     }
 
-    protected function validateValue(
-        ParamAttributeInterface $paramAttribute,
-        ControllerEvent $event,
-        mixed $value
-    ): void {
-        $this->checkMissingValue($paramAttribute, $event->getRequest(), $value);
+    private function validateValue(ParamAttributeInterface $attribute, ControllerEvent $event, mixed $value): void
+    {
+        $this->checkMissingValue($attribute, $event->getRequest(), $value);
 
-        if (
-            !$paramAttribute instanceof Attributes\FileParam
-            && !$paramAttribute instanceof Attributes\BodyParam
-            && !$paramAttribute instanceof Annotations\FileParam
-            && !$paramAttribute instanceof Annotations\BodyParam
-        ) {
-            $value = $this->typeCheckHandler->process($paramAttribute, $event->getRequest(), $value);
-            $this->checkParamRequirements($paramAttribute, $value);
+        if (!$attribute instanceof FileParam && !$attribute instanceof BodyParam) {
+            $value = $this->typeCheckHandler->process($attribute, $event->getRequest(), $value);
+            $this->checkParamRequirements($attribute, $value);
         }
 
-        $event->getRequest()->attributes->set($paramAttribute->getName(), $value);
+        $event->getRequest()->attributes->set($attribute->getName(), $value);
     }
 
-    protected function findMatchingMethodParameter(string $paramName, callable $controller): \ReflectionParameter
+    private function findMatchingMethodParameter(string $paramName, callable $controller): \ReflectionParameter
     {
         /** @noinspection PhpUnhandledExceptionInspection */
         $reflectionClass = new \ReflectionClass(get_class($controller[0]));
@@ -137,7 +124,7 @@ abstract class AbstractParamAttributeProcessor extends AbstractAttributeProcesso
         throw new HttpException(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR);
     }
 
-    protected function checkMissingValue(ParamAttributeInterface $attribute, Request $request, mixed $value): void
+    private function checkMissingValue(ParamAttributeInterface $attribute, Request $request, mixed $value): void
     {
         if (in_array($value, ['', null], true) && true === $attribute->isRequired()) {
             $this->logger->alert(
@@ -151,7 +138,7 @@ abstract class AbstractParamAttributeProcessor extends AbstractAttributeProcesso
         }
     }
 
-    protected function checkParamRequirements(ParamAttributeInterface $attribute, mixed $value): void
+    private function checkParamRequirements(ParamAttributeInterface $attribute, mixed $value): void
     {
         if (is_array($value)) {
             $self = $this;

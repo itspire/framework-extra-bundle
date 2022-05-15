@@ -11,12 +11,12 @@ declare(strict_types=1);
 namespace Itspire\FrameworkExtraBundle\Util\Strategy\Attribute;
 
 use Itspire\FrameworkExtraBundle\Attribute\AttributeInterface;
-use Itspire\FrameworkExtraBundle\Util\Strategy\ProcessorInterface;
+use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor\AttributeProcessorInterface;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 
 interface AttributeHandlerInterface
 {
-    public function registerProcessor(ProcessorInterface $attributeProcessor): self;
+    public function registerProcessor(AttributeProcessorInterface $attributeProcessor): self;
 
     public function process(ControllerEvent $event, AttributeInterface $attribute): void;
 }

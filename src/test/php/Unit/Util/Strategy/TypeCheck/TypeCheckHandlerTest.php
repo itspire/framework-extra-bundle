@@ -12,11 +12,10 @@ namespace Itspire\FrameworkExtraBundle\Tests\Unit\Util\Strategy\TypeCheck;
 
 use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
-use Itspire\FrameworkExtraBundle\Annotation\QueryParam as QueryParamAnnotation;
-use Itspire\FrameworkExtraBundle\Attribute\ParamAttributeInterface;
-use Itspire\FrameworkExtraBundle\Attribute\QueryParam as QueryParamAttribute;
+use Itspire\FrameworkExtraBundle\Attribute\QueryParam;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\Processor\IntegerProcessor;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\Processor\StringProcessor;
+use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\Processor\TypeCheckProcessorInterface;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\TypeCheckHandler;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\TypeCheckHandlerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -26,15 +25,13 @@ use Symfony\Component\HttpFoundation\Request;
 
 class TypeCheckHandlerTest extends TestCase
 {
-    private ?MockObject $loggerMock = null;
-    private ?MockObject $integerProcessorMock = null;
-    private ?MockObject $stringProcessorMock = null;
+    private MockObject | LoggerInterface | null $loggerMock = null;
+    private MockObject | TypeCheckProcessorInterface | null $integerProcessorMock = null;
+    private MockObject | TypeCheckProcessorInterface | null $stringProcessorMock = null;
     private ?TypeCheckHandlerInterface $typeCheckHandler = null;
 
     protected function setUp(): void
     {
-        parent::setUp();
-
         $this->loggerMock = $this->getMockBuilder(LoggerInterface::class)->getMock();
 
         $this->integerProcessorMock = $this
@@ -53,9 +50,7 @@ class TypeCheckHandlerTest extends TestCase
 
     protected function tearDown(): void
     {
-        unset($this->loggerMock, $this->typeCheckHandlerMock, $this->typeCheckHandler);
-
-        parent::tearDown();
+        unset($this->typeCheckHandler, $this->loggerMock, $this->integerProcessorMock, $this->stringProcessorMock);
     }
 
     /** @test */
@@ -77,19 +72,8 @@ class TypeCheckHandlerTest extends TestCase
         static::assertCount(expectedCount: 2, haystack: $reflectionProperty->getValue($this->typeCheckHandler));
     }
 
-    public function intAnnotationOrAttributeProvider(): array
-    {
-        return [
-            'paramAnnotation' => [new QueryParamAnnotation(name: 'param', type: 'int')],
-            'paramAttribute' => [new QueryParamAttribute(name: 'param', type: 'int')],
-        ];
-    }
-
-    /**
-     * @test
-     * @dataProvider intAnnotationOrAttributeProvider
-     */
-    public function processNoProcessorTest(ParamAttributeInterface $paramAttribute): void
+    /** @test */
+    public function processNoProcessorTest(): void
     {
         $exceptionDefinition = HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR;
 
@@ -102,6 +86,8 @@ class TypeCheckHandlerTest extends TestCase
             ->method('error')
             ->with('No processor found to check expected value type "int" for param "param" on route "test".');
 
+        $paramAttribute = new QueryParam(name: 'param', type: 'int');
+
         (new TypeCheckHandler($this->loggerMock))->process(
             paramAttribute: $paramAttribute,
             request: new Request(attributes: ['_route' => 'test']),
@@ -109,25 +95,16 @@ class TypeCheckHandlerTest extends TestCase
         );
     }
 
-    public function stringAnnotationOrAttributeProvider(): array
-    {
-        return [
-            'paramAnnotation' => [new QueryParamAnnotation(name: 'param', type: 'string')],
-            'paramAttribute' => [new QueryParamAttribute(name: 'param', type: 'string')],
-        ];
-    }
-
-    /**
-     * @test
-     * @dataProvider stringAnnotationOrAttributeProvider
-     */
-    public function processNoValidProcessorTest(ParamAttributeInterface $paramAttribute): void
+    /** @test */
+    public function processNoValidProcessorTest(): void
     {
         $exceptionDefinition = HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR;
 
         $this->expectException(HttpException::class);
         $this->expectExceptionCode($exceptionDefinition->value);
         $this->expectExceptionMessage($exceptionDefinition->getDescription());
+
+        $paramAttribute = new QueryParam(name: 'param', type: 'string');
 
         $this->integerProcessorMock
             ->expects(static::once())
@@ -147,20 +124,11 @@ class TypeCheckHandlerTest extends TestCase
         );
     }
 
-    public function noTypeAnnotationOrAttributeProvider(): array
+    /** @test */
+    public function processNoTypeValidationRequiredTest(): void
     {
-        return [
-            'paramAnnotation' => [new QueryParamAnnotation(name: 'param')],
-            'paramAttribute' => [new QueryParamAttribute(name: 'param')],
-        ];
-    }
+        $paramAttribute = new QueryParam(name: 'param');
 
-    /**
-     * @test
-     * @dataProvider noTypeAnnotationOrAttributeProvider
-     */
-    public function processNoTypeValidationRequiredTest(ParamAttributeInterface $paramAttribute): void
-    {
         static::assertEquals(
             expected: 1,
             actual: $this->typeCheckHandler->process(
@@ -171,12 +139,10 @@ class TypeCheckHandlerTest extends TestCase
         );
     }
 
-    /**
-     * @test
-     * @dataProvider intAnnotationOrAttributeProvider
-     */
-    public function processTest(ParamAttributeInterface $paramAttribute): void
+    /** @test */
+    public function processTest(): void
     {
+        $paramAttribute = new QueryParam(name: 'param', type: 'int');
         $request = new Request(attributes: ['_route' => 'test']);
 
         $this->integerProcessorMock->expects(static::once())->method('supports')->with('int')->willReturn(true);

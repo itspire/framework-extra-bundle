@@ -10,20 +10,14 @@ declare(strict_types=1);
 
 namespace Itspire\FrameworkExtraBundle\EventListener;
 
-use Doctrine\Common\Annotations\Reader;
-use Itspire\FrameworkExtraBundle\Annotation\AnnotationInterface;
 use Itspire\FrameworkExtraBundle\Attribute\AttributeInterface;
-use Itspire\FrameworkExtraBundle\Util\Strategy\Annotation\AnnotationHandlerInterface;
 use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\AttributeHandlerInterface;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 
 class ControllerListener
 {
-    public function __construct(
-        private Reader $annotationsReader,
-        private AnnotationHandlerInterface $annotationHandler,
-        private AttributeHandlerInterface $attributeHandler
-    ) {
+    public function __construct(private AttributeHandlerInterface $attributeHandler)
+    {
     }
 
     public function onKernelController(ControllerEvent $event): void
@@ -41,14 +35,6 @@ class ControllerListener
 
                 if ($attribute instanceof AttributeInterface) {
                     $this->attributeHandler->process($event, $attribute);
-                }
-            }
-
-            $annotations = $this->annotationsReader->getMethodAnnotations($reflectionMethod);
-
-            foreach ($annotations as $annotation) {
-                if ($annotation instanceof AnnotationInterface) {
-                    $this->annotationHandler->process($event, $annotation);
                 }
             }
         }

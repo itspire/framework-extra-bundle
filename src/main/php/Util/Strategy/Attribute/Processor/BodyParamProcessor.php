@@ -24,7 +24,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 
-class BodyParamProcessor extends AbstractParamAttributeProcessor implements AttributeProcessorInterface
+class BodyParamProcessor extends AbstractParamAttributeProcessor
 {
     private const SUPPORTED_CONTENT_TYPES = [MimeType::APPLICATION_XML, MimeType::APPLICATION_JSON];
 
@@ -58,17 +58,16 @@ class BodyParamProcessor extends AbstractParamAttributeProcessor implements Attr
         $request->attributes->set(key: CustomRequestAttributes::BODYPARAM_PROCESSED, value: true);
     }
 
-    /** @param BodyParam $paramAttribute */
-    protected function getParamValue(Request $request, ParamAttributeInterface $paramAttribute): mixed
+    /** @param BodyParam $attribute */
+    protected function getParamValue(Request $request, ParamAttributeInterface $attribute): mixed
     {
-        $paramValue = parent::getParamValue($request, $paramAttribute);
+        $paramValue = parent::getParamValue($request, $attribute);
 
-        // If request content type is supported by the serializer
         if (empty($paramValue)) {
             return $paramValue;
         }
 
-        if (null !== $paramAttribute->getClass()) {
+        if (null !== $attribute->getClass()) {
             if (
                 !in_array(
                     $request->headers->get(key: 'Content-Type'),
@@ -99,7 +98,7 @@ class BodyParamProcessor extends AbstractParamAttributeProcessor implements Attr
             try {
                 $paramValue = $this->serializer->deserialize(
                     $paramValue,
-                    $paramAttribute->getClass(),
+                    $attribute->getClass(),
                     $request->getContentType(),
                     $deserializationContext
                 );
@@ -107,7 +106,7 @@ class BodyParamProcessor extends AbstractParamAttributeProcessor implements Attr
                 $this->logger->alert(
                     vsprintf(
                         format: 'Deserialization to parameter "%s" of type "%s" failed.',
-                        values: [$paramAttribute->getName(), $paramAttribute->getType()]
+                        values: [$attribute->getName(), $attribute->getType()]
                     ),
                     ['exception' => $exception]
                 );

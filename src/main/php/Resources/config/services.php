@@ -11,8 +11,9 @@ declare(strict_types=1);
 use Itspire\FrameworkExtraBundle\EventListener\ControllerListener;
 use Itspire\FrameworkExtraBundle\EventListener\ErrorListener;
 use Itspire\FrameworkExtraBundle\EventListener\ViewListener;
-use Itspire\FrameworkExtraBundle\Util\Strategy\Annotation as ItspireFrameworkAnnotation;
-use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute as ItspireFrameworkAttribute;
+use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\AttributeHandler;
+use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor\AttributeProcessorInterface;
+use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor\ProducesProcessor;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\Processor\TypeCheckProcessorInterface;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\TypeCheckHandler;
 use Symfony\Component\DependencyInjection\Loader\Configurator;
@@ -23,11 +24,7 @@ return static function (ContainerConfigurator $configurator) {
     $services = $configurator->services()->defaults()->autowire()->autoconfigure();
 
     $services
-        ->instanceof(fqcn: ItspireFrameworkAnnotation\Processor\AnnotationProcessorInterface::class)
-        ->tag(name: 'itspire.framework_extra.annotation_processor');
-
-    $services
-        ->instanceof(fqcn: ItspireFrameworkAttribute\Processor\AttributeProcessorInterface::class)
+        ->instanceof(fqcn: AttributeProcessorInterface::class)
         ->tag(name: 'itspire.framework_extra.attribute_processor');
 
     $services
@@ -44,28 +41,14 @@ return static function (ContainerConfigurator $configurator) {
     $services->load(namespace: 'Itspire\\FrameworkExtraBundle\\EventListener\\', resource: '../../EventListener');
 
     $services
-        ->set(id: ItspireFrameworkAnnotation\Processor\ProducesProcessor::class)
+        ->set(id: ProducesProcessor::class)
         ->bind(
             nameOrFqcn: '$allowHTMLResponseContentType',
             valueOrRef: '%itspire.framework_extra.allow_html_response_content_type%'
         );
 
     $services
-        ->set(id: ItspireFrameworkAttribute\Processor\ProducesProcessor::class)
-        ->bind(
-            nameOrFqcn: '$allowHTMLResponseContentType',
-            valueOrRef: '%itspire.framework_extra.allow_html_response_content_type%'
-        );
-
-    $services
-        ->set(id: ItspireFrameworkAnnotation\AnnotationHandler::class)
-        ->bind(
-            nameOrFqcn: '$processors',
-            valueOrRef: Configurator\tagged_iterator(tag: 'itspire.framework_extra.annotation_processor')
-        );
-
-    $services
-        ->set(id: ItspireFrameworkAttribute\AttributeHandler::class)
+        ->set(id: AttributeHandler::class)
         ->bind(
             nameOrFqcn: '$processors',
             valueOrRef: Configurator\tagged_iterator(tag: 'itspire.framework_extra.attribute_processor')
@@ -77,11 +60,6 @@ return static function (ContainerConfigurator $configurator) {
             nameOrFqcn: '$processors',
             valueOrRef: Configurator\tagged_iterator(tag: 'itspire.framework_extra.type_checker_processor')
         );
-
-    $services->alias(
-        id: ItspireFrameworkAttribute\AttributeHandlerInterface::class,
-        referencedId: ItspireFrameworkAttribute\AttributeHandler::class
-    );
 
     $services
         ->set(ControllerListener::class)

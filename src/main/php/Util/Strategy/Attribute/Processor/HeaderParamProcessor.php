@@ -13,7 +13,7 @@ namespace Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor;
 use Itspire\FrameworkExtraBundle\Attribute\AttributeInterface;
 use Itspire\FrameworkExtraBundle\Attribute\HeaderParam;
 
-class HeaderParamProcessor extends AbstractParamAttributeProcessor implements AttributeProcessorInterface
+class HeaderParamProcessor extends AbstractParamAttributeProcessor
 {
     public function supports(AttributeInterface $attribute): bool
     {

@@ -13,7 +13,7 @@ namespace Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor;
 use Itspire\FrameworkExtraBundle\Attribute\AttributeInterface;
 use Itspire\FrameworkExtraBundle\Attribute\QueryParam;
 
-class QueryParamProcessor extends AbstractParamAttributeProcessor implements AttributeProcessorInterface
+class QueryParamProcessor extends AbstractParamAttributeProcessor
 {
     public function supports(AttributeInterface $attribute): bool
     {

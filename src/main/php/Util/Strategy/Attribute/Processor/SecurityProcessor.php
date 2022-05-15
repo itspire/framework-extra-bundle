@@ -14,7 +14,7 @@ use Itspire\FrameworkExtraBundle\Attribute\AttributeInterface;
 use Itspire\FrameworkExtraBundle\Attribute\Security;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 
-class SecurityProcessor extends AbstractAttributeProcessor implements AttributeProcessorInterface
+class SecurityProcessor extends AbstractAttributeProcessor
 {
     public function supports(AttributeInterface $attribute): bool
     {

@@ -26,7 +26,6 @@
         </include>
         <exclude>
             <directory suffix="Interface.php">src/main/php</directory>
-            <directory>src/main/php/Annotation</directory>
             <directory>src/main/php/Attribute</directory>
             <directory>src/main/php/Resources</directory>
             <file>src/main/php/ItspireFrameworkExtraBundle.php</file>

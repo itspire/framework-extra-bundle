@@ -15,7 +15,7 @@ use Itspire\FrameworkExtraBundle\Attribute\Route;
 use Itspire\FrameworkExtraBundle\Configuration\CustomRequestAttributes;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 
-class RouteProcessor extends AbstractAttributeProcessor implements AttributeProcessorInterface
+class RouteProcessor extends AbstractAttributeProcessor
 {
     public function supports(AttributeInterface $attribute): bool
     {

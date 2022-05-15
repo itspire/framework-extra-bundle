@@ -12,26 +12,14 @@ namespace Itspire\FrameworkExtraBundle\Tests\TestApp\Model;
 
 use JMS\Serializer\Annotation as Serializer;
 
-/** @Serializer\XmlRoot("testObject") */
 #[Serializer\XmlRoot('testObject')]
 class TestObject
 {
-    /**
-     * @Serializer\XmlAttribute()
-     * @Serializer\SerializedName("testProperty")
-     * @Serializer\Type("string")
-     */
     #[Serializer\XmlAttribute]
     #[Serializer\SerializedName('testProperty')]
     #[Serializer\Type('string')]
     private ?string $testProperty = null;
 
-    /**
-     * @Serializer\XmlAttribute()
-     * @Serializer\SerializedName("testProperty2")
-     * @Serializer\Type("int")
-     * @Serializer\Groups({"extended"})
-     */
     #[Serializer\XmlAttribute]
     #[Serializer\SerializedName('testProperty2')]
     #[Serializer\Type('int')]
