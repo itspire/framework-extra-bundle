@@ -39,8 +39,8 @@ class QueryParamProcessorTest extends AttributeProcessorTest\QueryParamProcessor
         ];
     }
 
-    protected function getQueryParam(bool $required): ParamAttributeInterface
+    protected function getQueryParam(bool $required, mixed $default = null): ParamAttributeInterface
     {
-        return new QueryParam(name: 'param', type: 'int', required: $required, requirements: '\d+');
+        return new QueryParam(name: 'param', type: 'int', required: $required, requirements: '\d+', default: $default);
     }
 }

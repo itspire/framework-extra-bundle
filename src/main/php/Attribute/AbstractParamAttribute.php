@@ -16,7 +16,8 @@ class AbstractParamAttribute implements ParamAttributeInterface
         protected ?string $name = null,
         protected ?string $type = null,
         protected bool $required = true,
-        protected ?string $requirements = null
+        protected ?string $requirements = null,
+        protected mixed $default = null
     ) {
     }
 
@@ -25,7 +26,7 @@ class AbstractParamAttribute implements ParamAttributeInterface
         return $this->name;
     }
 
-    public function setType(string $type): ParamAttributeInterface
+    public function setType(string $type): static
     {
         $this->type = $type;
 
@@ -37,12 +38,7 @@ class AbstractParamAttribute implements ParamAttributeInterface
         return $this->type;
     }
 
-    public function getRequirements(): ?string
-    {
-        return $this->requirements;
-    }
-
-    public function setRequired(bool $required): ParamAttributeInterface
+    public function setRequired(bool $required): static
     {
         $this->required = $required;
 
@@ -52,5 +48,22 @@ class AbstractParamAttribute implements ParamAttributeInterface
     public function isRequired(): bool
     {
         return $this->required;
+    }
+
+    public function getRequirements(): ?string
+    {
+        return $this->requirements;
+    }
+
+    public function setDefault(mixed $default = null): static
+    {
+        $this->default = $default;
+
+        return $this;
+    }
+
+    public function getDefault(): mixed
+    {
+        return $this->default;
     }
 }

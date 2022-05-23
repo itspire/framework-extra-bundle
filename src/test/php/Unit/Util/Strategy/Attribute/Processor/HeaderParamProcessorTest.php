@@ -62,6 +62,34 @@ class HeaderParamProcessorTest extends TestCase
     }
 
     /** @test */
+    public function processDefaultTest(): void
+    {
+        $headerParam = $this->getHeaderParam(MimeType::APPLICATION_JSON->value);
+        $request = new Request();
+
+        $this->typeCheckHandlerMock
+            ->expects(static::once())
+            ->method('process')
+            ->with($headerParam, $request, MimeType::APPLICATION_JSON->value)
+            ->willReturn(MimeType::APPLICATION_JSON->value);
+
+        $this->headerParamProcessor->process(
+            new ControllerEvent(
+                $this->getMockBuilder(HttpKernelInterface::class)->getMock(),
+                [new FixtureController(), 'param'],
+                $request,
+                HttpKernelInterface::MAIN_REQUEST
+            ),
+            $headerParam
+        );
+
+        static::assertEquals(
+            expected: MimeType::APPLICATION_JSON->value,
+            actual: $request->attributes->get(key: 'param')
+        );
+    }
+
+    /** @test */
     public function processTest(): void
     {
         $headerParam = $this->getHeaderParam();
@@ -89,8 +117,8 @@ class HeaderParamProcessorTest extends TestCase
         );
     }
 
-    protected function getHeaderParam(): ParamAttributeInterface
+    protected function getHeaderParam(mixed $default = null): ParamAttributeInterface
     {
-        return new HeaderParam(name: 'param', type: 'string', headerName: 'Content-Type');
+        return new HeaderParam(name: 'param', type: 'string', headerName: 'Content-Type', default: $default);
     }
 }

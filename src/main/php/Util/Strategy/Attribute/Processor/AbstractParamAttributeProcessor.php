@@ -42,6 +42,11 @@ abstract class AbstractParamAttributeProcessor extends AbstractAttributeProcesso
                 ->setRequired(!$reflectionParameter->getType()->allowsNull());
         }
 
+        // If native default value is provided, it will take precedence over the one on the attribute
+        if ($reflectionParameter->isDefaultValueAvailable()) {
+            $attribute->setDefault($reflectionParameter->getDefaultValue());
+        }
+
         $paramValue = $this->getParamValue($event->getRequest(), $attribute);
 
         $this->validateValue($attribute, $event, $paramValue);
@@ -60,16 +65,16 @@ abstract class AbstractParamAttributeProcessor extends AbstractAttributeProcesso
             Annotations\HeaderParam::class,
             Attributes\HeaderParam::class => $request->headers->get(
                 key: $paramAttribute->getHeaderName(),
-                default: null
+                default: $paramAttribute->getDefault()
             ),
             Annotations\QueryParam::class,
             Attributes\QueryParam::class => $request->query->has($paramAttribute->getName())
                 ? $request->query->all()[$paramAttribute->getName()]
-                : null,
+                : $paramAttribute->getDefault(),
             Annotations\RequestParam::class,
             Attributes\RequestParam::class => $request->request->has($paramAttribute->getName())
                 ? $request->request->all()[$paramAttribute->getName()]
-                : null,
+                : $paramAttribute->getDefault(),
         };
     }
 

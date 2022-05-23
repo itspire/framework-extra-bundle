@@ -39,8 +39,8 @@ class RequestParamProcessorTest extends AttributeProcessorTest\RequestParamProce
         ];
     }
 
-    protected function getRequestParam(): ParamAttributeInterface
+    protected function getRequestParam(mixed $default = null): ParamAttributeInterface
     {
-        return new RequestParam(name: 'param', type: 'int', required: true, requirements: '\d+');
+        return new RequestParam(name: 'param', type: 'int', required: true, requirements: '\d+', default: $default);
     }
 }

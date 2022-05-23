@@ -38,7 +38,7 @@ class Produces implements AttributeInterface
     }
 
     /** @param string|string[]|MimeType|MimeType[] $acceptableFormats */
-    private function setAcceptableFormats(mixed $acceptableFormats): self
+    private function setAcceptableFormats(mixed $acceptableFormats): static
     {
         if (!is_array($acceptableFormats)) {
             $acceptableFormats = [$acceptableFormats];
@@ -57,7 +57,7 @@ class Produces implements AttributeInterface
     }
 
     /** @param string|string[] $serializationGroups */
-    private function setSerializationGroups(mixed $serializationGroups): self
+    private function setSerializationGroups(mixed $serializationGroups): static
     {
         if (!is_array($serializationGroups)) {
             $serializationGroups = [$serializationGroups];

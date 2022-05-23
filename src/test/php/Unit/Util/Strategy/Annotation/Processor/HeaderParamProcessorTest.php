@@ -39,8 +39,8 @@ class HeaderParamProcessorTest extends AttributeProcessorTest\HeaderParamProcess
         ];
     }
 
-    protected function getHeaderParam(): ParamAttributeInterface
+    protected function getHeaderParam(mixed $default = null): ParamAttributeInterface
     {
-        return new HeaderParam(name: 'param', headerName: 'content-type', type: 'string');
+        return new HeaderParam(name: 'param', headerName: 'content-type', type: 'string', default: $default);
     }
 }

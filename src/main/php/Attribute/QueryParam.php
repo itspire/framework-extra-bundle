@@ -17,8 +17,9 @@ class QueryParam extends AbstractParamAttribute
         string $name,
         ?string $type = null,
         bool $required = false,
-        ?string $requirements = null
+        ?string $requirements = null,
+        mixed $default = null
     ) {
-        parent::__construct($name, $type, $required, $requirements);
+        parent::__construct($name, $type, $required, $requirements, $default);
     }
 }

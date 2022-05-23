@@ -38,7 +38,7 @@ class Consumes implements AttributeInterface
     }
 
     /** @param string|string[]|MimeType|MimeType[] $consumableContentTypes */
-    private function setConsumableContentTypes(mixed $consumableContentTypes): self
+    private function setConsumableContentTypes(mixed $consumableContentTypes): static
     {
         if (!is_array($consumableContentTypes)) {
             $consumableContentTypes = [$consumableContentTypes];
@@ -57,7 +57,7 @@ class Consumes implements AttributeInterface
     }
 
     /** @param string|string[] $deserializationGroups */
-    private function setDeserializationGroups(mixed $deserializationGroups): self
+    private function setDeserializationGroups(mixed $deserializationGroups): static
     {
         if (!is_array($deserializationGroups)) {
             $deserializationGroups = [$deserializationGroups];

@@ -18,9 +18,10 @@ class HeaderParam extends AbstractParamAttribute
         private ?string $headerName = null,
         ?string $type = null,
         bool $required = true,
-        ?string $requirements = null
+        ?string $requirements = null,
+        mixed $default = null
     ) {
-        parent::__construct($name, $type, $required, $requirements);
+        parent::__construct($name, $type, $required, $requirements, $default);
 
         if (null === $this->headerName) {
             $this->headerName = $this->name;

@@ -61,6 +61,31 @@ class QueryParamProcessorTest extends TestCase
     }
 
     /** @test */
+    public function processDefaultTest(): void
+    {
+        $queryParam = $this->getQueryParam(true, 10);
+        $request = new Request();
+
+        $this->typeCheckHandlerMock
+            ->expects(static::once())
+            ->method('process')
+            ->with($queryParam, $request, 10)
+            ->willReturn(10);
+
+        $this->queryParamProcessor->process(
+            new ControllerEvent(
+                $this->getMockBuilder(HttpKernelInterface::class)->getMock(),
+                [new FixtureController(), 'param'],
+                $request,
+                HttpKernelInterface::MAIN_REQUEST
+            ),
+            $queryParam
+        );
+
+        static::assertEquals(expected: 10, actual: $request->attributes->get(key: 'param'));
+    }
+
+    /** @test */
     public function processTest(): void
     {
         $queryParam = $this->getQueryParam(true);
@@ -110,8 +135,8 @@ class QueryParamProcessorTest extends TestCase
         static::assertNull(actual: $request->attributes->get(key: 'param'));
     }
 
-    protected function getQueryParam(bool $required): ParamAttributeInterface
+    protected function getQueryParam(bool $required, mixed $default = null): ParamAttributeInterface
     {
-        return new QueryParam(name: 'param', type: 'int', required: $required, requirements: '\d+');
+        return new QueryParam(name: 'param', type: 'int', required: $required, requirements: '\d+', default: $default);
     }
 }
