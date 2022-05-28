@@ -36,6 +36,7 @@ class Route extends BaseRoute implements AttributeInterface
         private ?HttpResponseStatus $responseStatus = null
     ) {
         parent::__construct(
+            [],
             $path,
             $name,
             $requirements,
