@@ -21,6 +21,7 @@ use Itspire\Exception\Http\HttpException;
 use Itspire\FrameworkExtraBundle\Configuration\CustomRequestAttributes;
 use JMS\Serializer\SerializerInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Twig\Environment;
@@ -93,7 +94,9 @@ class ErrorListener extends AbstractTemplateRendererListener
                 $httpResponseStatus = $this->mapException($exception->getExceptionDefinition());
                 $apiException = $this->adaptException($exception);
 
-                $response = new Response(status: $httpResponseStatus->value);
+                $response = $responseContentType === MimeType::APPLICATION_JSON->value
+                    ? new JsonResponse(status: $httpResponseStatus->value)
+                    : new Response(status: $httpResponseStatus->value);
 
                 if (null !== $apiException) {
                     $response->setContent(

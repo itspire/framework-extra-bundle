@@ -180,7 +180,7 @@ class ControllerTest extends WebTestCase
         $response = $this->client->getResponse();
 
         static::assertEquals(expected: HttpResponseStatus::HTTP_BAD_REQUEST->value, actual: $response->getStatusCode());
-        static::assertEmpty(actual: $response->getContent());
+        static::assertEquals(expected:'{}', actual: $response->getContent());
     }
 
     /** @test */
