@@ -105,7 +105,7 @@ class ErrorListener extends AbstractTemplateRendererListener
                 }
 
                 $response->headers->set(key: 'Content-Type', values: $responseContentType);
-                $messagePart = 'exception of type ' . $exception::class;
+                $messagePart = 'exception type ' . $exception::class;
 
                 try {
                     $response->setContent(

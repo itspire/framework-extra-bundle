@@ -134,7 +134,7 @@ class ErrorListenerTest extends TestCase
         $request->attributes->set(key: CustomRequestAttributes::RESPONSE_FORMAT, value: 'xml');
 
         $this->loggerMock
-            ->expects(static::exactly(1))
+            ->expects(static::once())
             ->method('notice')
             ->with(
                 vsprintf(
@@ -242,25 +242,25 @@ class ErrorListenerTest extends TestCase
             ->setMessage($exception->getMessage());
 
         $this->exceptionMapperMock
-            ->expects(static::exactly(1))
+            ->expects(static::once())
             ->method('supports')
             ->with($exceptionDefinition)
             ->willReturn(true);
 
         $this->exceptionMapperMock
-            ->expects(static::exactly(1))
+            ->expects(static::once())
             ->method('map')
             ->with($exceptionDefinition)
             ->willReturn(HttpResponseStatus::HTTP_FORBIDDEN);
 
         $this->exceptionAdapterMock
-            ->expects(static::exactly(1))
+            ->expects(static::once())
             ->method('supports')
             ->with($exception)
             ->willReturn(true);
 
         $this->exceptionAdapterMock
-            ->expects(static::exactly(1))
+            ->expects(static::once())
             ->method('adaptBusinessExceptionToApiException')
             ->with($exception)
             ->willReturn($webserviceApiException);
@@ -300,19 +300,19 @@ class ErrorListenerTest extends TestCase
         $request->attributes->set(key: CustomRequestAttributes::RESPONSE_FORMAT, value: 'xml');
 
         $this->exceptionMapperMock
-            ->expects(static::exactly(1))
+            ->expects(static::once())
             ->method('supports')
             ->with($exceptionDefinition)
             ->willReturn(true);
 
         $this->exceptionMapperMock
-            ->expects(static::exactly(1))
+            ->expects(static::once())
             ->method('map')
             ->with($exceptionDefinition)
             ->willReturn(HttpResponseStatus::HTTP_CONFLICT);
 
         $this->exceptionAdapterMock
-            ->expects(static::exactly(1))
+            ->expects(static::once())
             ->method('supports')
             ->with($exception)
             ->willReturn(false);
@@ -377,25 +377,25 @@ class ErrorListenerTest extends TestCase
         );
 
         $this->exceptionMapperMock
-            ->expects(static::exactly(1))
+            ->expects(static::once())
             ->method('supports')
             ->with($exceptionDefinition)
             ->willReturn(true);
 
         $this->exceptionMapperMock
-            ->expects(static::exactly(1))
+            ->expects(static::once())
             ->method('map')
             ->with($exceptionDefinition)
             ->willReturn($httpResponseStatus);
 
         $this->exceptionAdapterMock
-            ->expects(static::exactly(1))
+            ->expects(static::once())
             ->method('supports')
             ->with($exception)
             ->willReturn(true);
 
         $this->exceptionAdapterMock
-            ->expects(static::exactly(1))
+            ->expects(static::once())
             ->method('adaptBusinessExceptionToApiException')
             ->with($exception)
             ->willReturn($webserviceException);
