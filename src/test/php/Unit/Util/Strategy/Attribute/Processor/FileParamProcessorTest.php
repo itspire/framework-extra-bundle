@@ -12,7 +12,6 @@ namespace Itspire\FrameworkExtraBundle\Tests\Unit\Util\Strategy\Attribute\Proces
 
 use Itspire\FrameworkExtraBundle\Attribute\Consumes;
 use Itspire\FrameworkExtraBundle\Attribute\FileParam;
-use Itspire\FrameworkExtraBundle\Attribute\ParamAttributeInterface;
 use Itspire\FrameworkExtraBundle\Tests\Unit\Fixtures\FixtureController;
 use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor\FileParamProcessor;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\TypeCheckHandlerInterface;
@@ -79,7 +78,7 @@ class FileParamProcessorTest extends TestCase
         static::assertInstanceOf(expected: UploadedFile::class, actual: $request->attributes->get(key: 'param'));
     }
 
-    protected function getFileParam(): ParamAttributeInterface
+    protected function getFileParam(): FileParam
     {
         return new FileParam(name: 'param');
     }

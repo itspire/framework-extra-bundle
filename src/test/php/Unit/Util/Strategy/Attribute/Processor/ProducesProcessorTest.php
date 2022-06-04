@@ -13,9 +13,7 @@ namespace Itspire\FrameworkExtraBundle\Tests\Unit\Util\Strategy\Attribute\Proces
 use Itspire\Common\Enum\MimeType;
 use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
-use Itspire\FrameworkExtraBundle\Attribute\AttributeInterface;
 use Itspire\FrameworkExtraBundle\Attribute\BodyParam;
-use Itspire\FrameworkExtraBundle\Attribute\ParamAttributeInterface;
 use Itspire\FrameworkExtraBundle\Attribute\Produces;
 use Itspire\FrameworkExtraBundle\Configuration\CustomRequestAttributes;
 use Itspire\FrameworkExtraBundle\Tests\Unit\Fixtures\FixtureController;
@@ -225,12 +223,12 @@ class ProducesProcessorTest extends TestCase
         );
     }
 
-    protected function getBodyParam(): ParamAttributeInterface
+    protected function getBodyParam(): BodyParam
     {
         return new BodyParam(name: 'param');
     }
 
-    protected function getProduces(mixed $acceptableFormats = [], mixed $serializationGroups = []): AttributeInterface
+    protected function getProduces(mixed $acceptableFormats = [], mixed $serializationGroups = []): Produces
     {
         return new Produces($acceptableFormats, $serializationGroups);
     }

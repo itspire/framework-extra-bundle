@@ -13,7 +13,6 @@ namespace Itspire\FrameworkExtraBundle\Tests\Unit\Util\Strategy\Attribute\Proces
 use Itspire\Common\Enum\Http\HttpResponseStatus;
 use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
-use Itspire\FrameworkExtraBundle\Attribute\AttributeInterface;
 use Itspire\FrameworkExtraBundle\Attribute\Consumes;
 use Itspire\FrameworkExtraBundle\Attribute\Route;
 use Itspire\FrameworkExtraBundle\Configuration\CustomRequestAttributes;
@@ -114,12 +113,12 @@ class RouteProcessorTest extends TestCase
         );
     }
 
-    protected function getConsumes(): AttributeInterface
+    protected function getConsumes(): Consumes
     {
         return new Consumes([]);
     }
 
-    protected function getRoute(): AttributeInterface
+    protected function getRoute(): Route
     {
         return new Route(path: '/test', responseStatus: HttpResponseStatus::HTTP_OK);
     }

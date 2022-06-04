@@ -242,4 +242,34 @@ class ControllerTest extends WebTestCase
             haystack: $response->getContent()
         );
     }
+
+    /** @test */
+    public function isGrantedSuccessTest(): void
+    {
+        $this->client->request(method: HttpMethod::GET->value, uri: $this->router->generate('isGrantedTest'));
+
+        $response = $this->client->getResponse();
+
+        static::assertEquals(expected: HttpResponseStatus::HTTP_OK->value, actual: $response->getStatusCode());
+        static::assertEquals(expected: 'success', actual: $response->getContent());
+    }
+
+    /** @test */
+    public function isGrantedFailTest(): void
+    {
+        static::ensureKernelShutdown();
+        $client = static::createClient();
+
+        $client->request(method: HttpMethod::GET->value, uri: $this->router->generate('isGrantedTest'));
+
+        $response = $client->getResponse();
+
+        $httpResponseStatus = HttpResponseStatus::HTTP_UNAUTHORIZED;
+
+        static::assertEquals(expected: $httpResponseStatus->value, actual: $response->getStatusCode());
+        static::assertStringContainsString(
+            needle: sprintf('HTTP/1.1 %s %s', $httpResponseStatus->value, $httpResponseStatus->getDescription()),
+            haystack: (string) $response
+        );
+    }
 }

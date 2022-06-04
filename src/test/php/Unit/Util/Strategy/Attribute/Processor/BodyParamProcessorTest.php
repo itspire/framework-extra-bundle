@@ -15,7 +15,6 @@ use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
 use Itspire\FrameworkExtraBundle\Attribute\BodyParam;
 use Itspire\FrameworkExtraBundle\Attribute\Consumes;
-use Itspire\FrameworkExtraBundle\Attribute\ParamAttributeInterface;
 use Itspire\FrameworkExtraBundle\Configuration\CustomRequestAttributes;
 use Itspire\FrameworkExtraBundle\Tests\TestApp\Model\TestObject;
 use Itspire\FrameworkExtraBundle\Tests\Unit\Fixtures\FixtureController;
@@ -271,7 +270,7 @@ class BodyParamProcessorTest extends TestCase
         static::assertEquals(expected: $testObject, actual: $request->attributes->get(key: 'param'));
     }
 
-    protected function getBodyParam(string $classFqn): ParamAttributeInterface
+    protected function getBodyParam(string $classFqn): BodyParam
     {
         return new BodyParam(name: 'param', type: 'class', class: $classFqn);
     }

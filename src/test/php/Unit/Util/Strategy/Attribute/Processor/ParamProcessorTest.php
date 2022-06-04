@@ -12,9 +12,7 @@ namespace Itspire\FrameworkExtraBundle\Tests\Unit\Util\Strategy\Attribute\Proces
 
 use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
-use Itspire\FrameworkExtraBundle\Attribute\AttributeInterface;
 use Itspire\FrameworkExtraBundle\Attribute\Consumes;
-use Itspire\FrameworkExtraBundle\Attribute\ParamAttributeInterface;
 use Itspire\FrameworkExtraBundle\Attribute\QueryParam;
 use Itspire\FrameworkExtraBundle\Tests\Unit\Fixtures\FixtureController;
 use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor\QueryParamProcessor;
@@ -317,12 +315,12 @@ class ParamProcessorTest extends TestCase
         );
     }
 
-    protected function getConsumes(): AttributeInterface
+    protected function getConsumes(): Consumes
     {
         return new Consumes();
     }
 
-    protected function getQueryParam(string $type = 'string', ?string $requirements = null): ParamAttributeInterface
+    protected function getQueryParam(string $type = 'string', ?string $requirements = null): QueryParam
     {
         return new QueryParam(name: 'param', type: $type, required: true, requirements: $requirements);
     }

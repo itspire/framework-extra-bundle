@@ -10,11 +10,12 @@ declare(strict_types=1);
 
 namespace Itspire\FrameworkExtraBundle\Tests\Unit\Util\Strategy\Attribute\Processor;
 
-use Itspire\Common\Enum\Http\HttpResponseStatus;
+use Itspire\FrameworkExtraBundle\Attribute\AttributeInterface;
 use Itspire\FrameworkExtraBundle\Attribute\Consumes;
-use Itspire\FrameworkExtraBundle\Attribute\Security;
+use Itspire\FrameworkExtraBundle\Attribute\IsGranted;
 use Itspire\FrameworkExtraBundle\Tests\Unit\Fixtures\FixtureController;
-use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor\SecurityProcessor;
+use Itspire\FrameworkExtraBundle\Tests\Unit\Fixtures\FixturePermission;
+use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor\IsGrantedProcessor;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -22,28 +23,28 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 
-class SecurityProcessorTest extends TestCase
+class IsGrantedProcessorTest extends TestCase
 {
     protected MockObject | LoggerInterface | null $loggerMock = null;
-    protected ?SecurityProcessor $securityProcessor = null;
+    protected ?IsGrantedProcessor $isGrantedProcessor = null;
 
     protected function setUp(): void
     {
         $this->loggerMock = $this->getMockBuilder(LoggerInterface::class)->getMock();
 
-        $this->securityProcessor = new SecurityProcessor($this->loggerMock);
+        $this->isGrantedProcessor = new IsGrantedProcessor($this->loggerMock);
     }
 
     protected function tearDown(): void
     {
-        unset($this->securityProcessor, $this->loggerMock);
+        unset($this->isGrantedProcessor, $this->loggerMock);
     }
 
     public function supportsProvider(): array
     {
         return [
             'notSupported' => [new Consumes(), false],
-            'supported' => [new Security(expression: 'true'), true],
+            'supported' => [new IsGranted(data: 'TEST'), true],
         ];
     }
 
@@ -53,16 +54,16 @@ class SecurityProcessorTest extends TestCase
      */
     public function supportsTest($attribute, $result): void
     {
-        static::assertEquals(expected: $result, actual: $this->securityProcessor->supports($attribute));
+        static::assertEquals(expected: $result, actual: $this->isGrantedProcessor->supports($attribute));
     }
 
     /** @test */
     public function processTest(): void
     {
-        $httpResponseStatus = HttpResponseStatus::HTTP_FORBIDDEN;
-        $attribute = $this->getSecurity();
+        $fixturePermission = FixturePermission::TEST;
+        $attribute = $this->getIsGranted();
 
-        $this->securityProcessor->process(
+        $this->isGrantedProcessor->process(
             new ControllerEvent(
                 $this->getMockBuilder(HttpKernelInterface::class)->getMock(),
                 [new FixtureController(), 'param'],
@@ -72,12 +73,11 @@ class SecurityProcessorTest extends TestCase
             $attribute
         );
 
-        static::assertEquals(expected: $httpResponseStatus->value, actual: $attribute->getStatusCode());
-        static::assertEquals(expected: $httpResponseStatus->getDescription(), actual: $attribute->getMessage());
+        static::assertEquals(expected: $fixturePermission->value, actual: $attribute->getAttributes());
     }
 
-    protected function getSecurity(): Security
+    protected function getIsGranted(): IsGranted
     {
-        return new Security(expression: 'false', responseStatus: HttpResponseStatus::HTTP_FORBIDDEN);
+        return new IsGranted(data: FixturePermission::TEST);
     }
 }

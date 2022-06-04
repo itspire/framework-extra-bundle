@@ -18,6 +18,7 @@ use Itspire\Exception\Definition\Webservice\WebserviceExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
 use Itspire\Exception\Webservice\WebserviceException;
 use Itspire\FrameworkExtraBundle\Attribute as ItspireFrameworkExtra;
+use Itspire\FrameworkExtraBundle\Tests\TestApp\Enum\Role;
 use Itspire\FrameworkExtraBundle\Tests\TestApp\Model\TestObject;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -127,5 +128,12 @@ class TestController extends AbstractController
     public function securityFail(): Response
     {
         return new Response('fail', HttpResponseStatus::HTTP_OK->value);
+    }
+
+    #[ItspireFrameworkExtra\Route(path: '/isGranted', name: 'isGrantedTest', methods: [HttpMethod::GET])]
+    #[ItspireFrameworkExtra\IsGranted(data: Role::ROLE_ADMIN)]
+    public function isGrantedRoute(): Response
+    {
+        return new Response('success', HttpResponseStatus::HTTP_OK->value);
     }
 }

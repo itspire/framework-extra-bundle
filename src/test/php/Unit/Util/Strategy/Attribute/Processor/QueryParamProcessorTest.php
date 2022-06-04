@@ -11,7 +11,6 @@ declare(strict_types=1);
 namespace Itspire\FrameworkExtraBundle\Tests\Unit\Util\Strategy\Attribute\Processor;
 
 use Itspire\FrameworkExtraBundle\Attribute\Consumes;
-use Itspire\FrameworkExtraBundle\Attribute\ParamAttributeInterface;
 use Itspire\FrameworkExtraBundle\Attribute\QueryParam;
 use Itspire\FrameworkExtraBundle\Tests\Unit\Fixtures\FixtureController;
 use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor\QueryParamProcessor;
@@ -135,7 +134,7 @@ class QueryParamProcessorTest extends TestCase
         static::assertNull(actual: $request->attributes->get(key: 'param'));
     }
 
-    protected function getQueryParam(bool $required, mixed $default = null): ParamAttributeInterface
+    protected function getQueryParam(bool $required, mixed $default = null): QueryParam
     {
         return new QueryParam(name: 'param', type: 'int', required: $required, requirements: '\d+', default: $default);
     }

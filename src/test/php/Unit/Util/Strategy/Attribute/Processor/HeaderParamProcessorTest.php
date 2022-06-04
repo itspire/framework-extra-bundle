@@ -13,7 +13,6 @@ namespace Itspire\FrameworkExtraBundle\Tests\Unit\Util\Strategy\Attribute\Proces
 use Itspire\Common\Enum\MimeType;
 use Itspire\FrameworkExtraBundle\Attribute\Consumes;
 use Itspire\FrameworkExtraBundle\Attribute\HeaderParam;
-use Itspire\FrameworkExtraBundle\Attribute\ParamAttributeInterface;
 use Itspire\FrameworkExtraBundle\Tests\Unit\Fixtures\FixtureController;
 use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor\HeaderParamProcessor;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\TypeCheckHandlerInterface;
@@ -117,7 +116,7 @@ class HeaderParamProcessorTest extends TestCase
         );
     }
 
-    protected function getHeaderParam(mixed $default = null): ParamAttributeInterface
+    protected function getHeaderParam(mixed $default = null): HeaderParam
     {
         return new HeaderParam(name: 'param', type: 'string', headerName: 'Content-Type', default: $default);
     }

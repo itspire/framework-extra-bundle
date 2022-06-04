@@ -11,7 +11,6 @@ declare(strict_types=1);
 namespace Itspire\FrameworkExtraBundle\Tests\Unit\Util\Strategy\Attribute\Processor;
 
 use Itspire\FrameworkExtraBundle\Attribute\Consumes;
-use Itspire\FrameworkExtraBundle\Attribute\ParamAttributeInterface;
 use Itspire\FrameworkExtraBundle\Attribute\RequestParam;
 use Itspire\FrameworkExtraBundle\Tests\Unit\Fixtures\FixtureController;
 use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor\RequestParamProcessor;
@@ -110,7 +109,7 @@ class RequestParamProcessorTest extends TestCase
         static::assertEquals(expected: 1, actual: $request->attributes->get(key: 'param'));
     }
 
-    protected function getRequestParam(mixed $default = null): ParamAttributeInterface
+    protected function getRequestParam(mixed $default = null): RequestParam
     {
         return new RequestParam(name: 'param', type: 'int', required: true, requirements: '\d+', default: $default);
     }

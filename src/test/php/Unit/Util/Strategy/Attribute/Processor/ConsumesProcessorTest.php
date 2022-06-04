@@ -13,7 +13,6 @@ namespace Itspire\FrameworkExtraBundle\Tests\Unit\Util\Strategy\Attribute\Proces
 use Itspire\Common\Enum\MimeType;
 use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
-use Itspire\FrameworkExtraBundle\Attribute\AttributeInterface;
 use Itspire\FrameworkExtraBundle\Attribute\BodyParam;
 use Itspire\FrameworkExtraBundle\Attribute\Consumes;
 use Itspire\FrameworkExtraBundle\Configuration\CustomRequestAttributes;
@@ -185,10 +184,8 @@ class ConsumesProcessorTest extends TestCase
         );
     }
 
-    protected function getConsumes(
-        mixed $consumableContentTypes = [],
-        mixed $deserializationGroups = []
-    ): AttributeInterface {
+    protected function getConsumes(mixed $consumableContentTypes = [], mixed $deserializationGroups = []): Consumes
+    {
         return new Consumes($consumableContentTypes, $deserializationGroups);
     }
 }
