@@ -13,6 +13,7 @@ namespace Itspire\FrameworkExtraBundle\Tests\Functional;
 use Itspire\Common\Enum\Http\HttpMethod;
 use Itspire\Common\Enum\Http\HttpResponseStatus;
 use Itspire\Common\Enum\MimeType;
+use PHPUnit\Framework\Attributes\Test;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -40,7 +41,7 @@ class ControllerTest extends WebTestCase
         parent::tearDown();
     }
 
-    /** @test */
+    #[Test]
     public function indexTest(): void
     {
         $expectedResult = [
@@ -64,12 +65,89 @@ class ControllerTest extends WebTestCase
         $response = $this->client->getResponse();
 
         static::assertEquals(expected: HttpResponseStatus::HTTP_OK->value, actual: $response->getStatusCode());
-        static::assertEquals(expected: json_encode($expectedResult), actual: $response->getContent());
+        static::assertEquals(
+            expected: json_encode($expectedResult, JSON_THROW_ON_ERROR),
+            actual: $response->getContent()
+        );
     }
 
-    /** @test */
+    #[Test]
+    public function inlineJsonTest(): void
+    {
+        // Do not indent JSON : it would cause test failure
+        $bodyContent = <<<'JSON'
+        {
+            "testProperty": "test"
+        }
+        JSON;
+
+        // Do not indent JSON : it would cause test failure
+        $expectedContent = <<<'JSON'
+        {
+            "Query Param": "queryParam2",
+            "Request Param": 20,
+            "Body Param": "test",
+            "Header Param": "application/json"
+        }
+        JSON;
+
+        $this->client->request(
+            method: HttpMethod::POST->value,
+            uri: $this->router->generate('inlineJsonTest', ['qParam' => 'queryParam2']),
+            parameters: ['rParam' => 20],
+            server: [
+                'CONTENT_TYPE' => MimeType::APPLICATION_JSON->value,
+                'HTTP_ACCEPT' => MimeType::APPLICATION_JSON->value,
+            ],
+            content: $bodyContent
+        );
+
+        $response = $this->client->getResponse();
+
+        static::assertEquals(expected: HttpResponseStatus::HTTP_OK->value, actual: $response->getStatusCode());
+        static::assertEquals(expected: $expectedContent, actual: $response->getContent());
+    }
+
+    #[Test]
+    public function inlineXmlTest(): void
+    {
+        // Do not indent XML : it would cause test failure
+        $expectedContent = <<<'XML'
+        <?xml version="1.0"?>
+        <response>
+          <item key="Query Param">queryParam2</item>
+          <item key="Request Param">20</item>
+          <item key="Body Param">test</item>
+          <item key="Header Param">application/xml</item>
+        </response>
+        XML;
+
+        $this->client->request(
+            method: HttpMethod::POST->value,
+            uri: $this->router->generate('inlineXmlTest', ['qParam' => 'queryParam2']),
+            parameters: ['rParam' => 20],
+            server: [
+                'CONTENT_TYPE' => MimeType::APPLICATION_XML->value,
+                'HTTP_ACCEPT' => MimeType::APPLICATION_XML->value,
+            ],
+            content: '<testObject testProperty="test" />'
+        );
+
+        $response = $this->client->getResponse();
+
+        static::assertEquals(expected: HttpResponseStatus::HTTP_OK->value, actual: $response->getStatusCode());
+        static::assertEquals(expected: $expectedContent, actual: trim($response->getContent()));
+    }
+
+    #[Test]
     public function serializeTest(): void
     {
+        // Do not indent XML : it would cause test failure
+        $expectedContent = <<<'XML'
+        <?xml version="1.0" encoding="UTF-8"?>
+        <testObject testProperty="testing"/>
+        XML;
+
         $this->client->request(
             method: HttpMethod::GET->value,
             uri: $this->router->generate('serializeTest'),
@@ -79,12 +157,13 @@ class ControllerTest extends WebTestCase
         $response = $this->client->getResponse();
 
         static::assertEquals(expected: HttpResponseStatus::HTTP_OK->value, actual: $response->getStatusCode());
+        static::assertEquals(expected: $expectedContent, actual: trim($response->getContent()));
         static::assertStringNotContainsString(needle: '<html lang="fr">', haystack: $response->getContent());
         static::assertStringContainsString(needle: 'testObject testProperty', haystack: $response->getContent());
         static::assertStringContainsString(needle: 'testing', haystack: $response->getContent());
     }
 
-    /** @test */
+    #[Test]
     public function regularTest(): void
     {
         $this->client->request(method: HttpMethod::GET->value, uri: $this->router->generate('regularTest'));
@@ -95,7 +174,7 @@ class ControllerTest extends WebTestCase
         static::assertEmpty(actual: $response->getContent());
     }
 
-    /** @test */
+    #[Test]
     public function regularWithTemplateTest(): void
     {
         $this->client->request(method: HttpMethod::GET->value, uri: $this->router->generate('regularTemplateTest'));
@@ -108,7 +187,7 @@ class ControllerTest extends WebTestCase
         static::assertStringContainsString(needle: 'Symfony Web Debug Toolbar', haystack: $response->getContent());
     }
 
-    /** @test */
+    #[Test]
     public function exceptionTest(): void
     {
         $this->client->request(
@@ -132,7 +211,7 @@ class ControllerTest extends WebTestCase
         static::assertEquals(expected: $expectedContent, actual: $response->getContent());
     }
 
-    /** @test */
+    #[Test]
     public function exceptionWildcardAcceptTest(): void
     {
         $this->client->request(
@@ -149,7 +228,7 @@ class ControllerTest extends WebTestCase
         static::assertStringContainsString(needle: 'CONFLICT', haystack: $response->getContent());
     }
 
-    /** @test */
+    #[Test]
     public function exceptionFullWildcardAcceptTest(): void
     {
         $this->client->request(
@@ -168,7 +247,7 @@ class ControllerTest extends WebTestCase
         static::assertStringContainsString(needle: 'Symfony Web Debug Toolbar', haystack: $response->getContent());
     }
 
-    /** @test */
+    #[Test]
     public function httpExceptionTest(): void
     {
         $this->client->request(
@@ -183,7 +262,7 @@ class ControllerTest extends WebTestCase
         static::assertEquals(expected:'{}', actual: $response->getContent());
     }
 
-    /** @test */
+    #[Test]
     public function uploadTest(): void
     {
         $this->client->request(
@@ -202,7 +281,7 @@ class ControllerTest extends WebTestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function getFileTest(): void
     {
         $this->client->request(method: HttpMethod::GET->value, uri: $this->router->generate('getFileTest'));
@@ -216,10 +295,10 @@ class ControllerTest extends WebTestCase
         static::assertEquals(expected: $expectedFile->getFileInfo(), actual: $response->getFile()->getFileInfo());
     }
 
-    /** @test */
+    #[Test]
     public function securitySuccessTest(): void
     {
-        $this->client->request(method: HttpMethod::GET->value, uri: $this->router->generate('securitySuccessTest'));
+        $this->client->request(method: HttpMethod::GET->value, uri: $this->router->generate('successSecurityTest'));
 
         $response = $this->client->getResponse();
 
@@ -227,10 +306,10 @@ class ControllerTest extends WebTestCase
         static::assertEquals(expected: 'success', actual: $response->getContent());
     }
 
-    /** @test */
+    #[Test]
     public function securityFailTest(): void
     {
-        $this->client->request(method: HttpMethod::GET->value, uri: $this->router->generate('securityFailTest'));
+        $this->client->request(method: HttpMethod::GET->value, uri: $this->router->generate('failSecurityTest'));
 
         $response = $this->client->getResponse();
 
@@ -243,7 +322,7 @@ class ControllerTest extends WebTestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function isGrantedSuccessTest(): void
     {
         $this->client->request(method: HttpMethod::GET->value, uri: $this->router->generate('isGrantedTest'));
@@ -254,7 +333,7 @@ class ControllerTest extends WebTestCase
         static::assertEquals(expected: 'success', actual: $response->getContent());
     }
 
-    /** @test */
+    #[Test]
     public function isGrantedFailTest(): void
     {
         static::ensureKernelShutdown();

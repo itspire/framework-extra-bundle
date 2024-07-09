@@ -29,7 +29,7 @@ class BodyParamProcessor extends AbstractParamAttributeProcessor
     private const SUPPORTED_CONTENT_TYPES = [MimeType::APPLICATION_XML, MimeType::APPLICATION_JSON];
 
     public function __construct(
-        private SerializerInterface $serializer,
+        private readonly SerializerInterface $serializer,
         LoggerInterface $logger,
         TypeCheckHandlerInterface $typeCheckHandler
     ) {
@@ -41,9 +41,12 @@ class BodyParamProcessor extends AbstractParamAttributeProcessor
         return $attribute instanceof BodyParam;
     }
 
-    /** @param ParamAttributeInterface $attribute */
-    protected function handleProcess(ControllerEvent $event, AttributeInterface $attribute): void
-    {
+    /** @param BodyParam $attribute */
+    protected function handleProcess(
+        ControllerEvent $event,
+        AttributeInterface $attribute,
+        ?\ReflectionParameter $reflectionParameter = null
+    ): void {
         $request = $event->getRequest();
 
         $this->checkAlreadyProcessed(
@@ -52,10 +55,32 @@ class BodyParamProcessor extends AbstractParamAttributeProcessor
             $event->getController(),
             CustomRequestAttributes::BODYPARAM_PROCESSED
         );
+        $this->resolveClass($request, $attribute, $reflectionParameter);
 
-        parent::handleProcess($event, $attribute);
+        parent::handleProcess($event, $attribute, $reflectionParameter);
 
         $request->attributes->set(key: CustomRequestAttributes::BODYPARAM_PROCESSED, value: true);
+    }
+
+    private function resolveClass(
+        Request $request,
+        BodyParam $attribute,
+        ?\ReflectionParameter $reflectionParameter = null
+    ): void {
+        if (null !== $reflectionParameter) {
+            $attribute->class ??= $reflectionParameter->getType()?->getName();
+        }
+
+        if (null === $attribute->class) {
+            $this->logger->error(
+                vsprintf(
+                    format: 'No class specified for parameter %s in route %s.',
+                    values: [BodyParam::class, $request->attributes->get(key: '_route')]
+                )
+            );
+
+            throw new HttpException(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     /** @param BodyParam $attribute */
@@ -72,7 +97,7 @@ class BodyParamProcessor extends AbstractParamAttributeProcessor
                 !in_array(
                     $request->headers->get(key: 'Content-Type'),
                     array_map(
-                        fn (MimeType $supportedContentType): string => $supportedContentType->value,
+                        static fn (MimeType $supportedContentType): string => $supportedContentType->value,
                         self::SUPPORTED_CONTENT_TYPES
                     ),
                     true
@@ -99,14 +124,14 @@ class BodyParamProcessor extends AbstractParamAttributeProcessor
                 $paramValue = $this->serializer->deserialize(
                     $paramValue,
                     $attribute->getClass(),
-                    $request->getContentType(),
+                    $request->getContentTypeFormat(),
                     $deserializationContext
                 );
             } catch (\Throwable $exception) {
                 $this->logger->alert(
                     vsprintf(
                         format: 'Deserialization to parameter "%s" of type "%s" failed.',
-                        values: [$attribute->getName(), $attribute->getType()]
+                        values: [$attribute->name, $attribute->type]
                     ),
                     ['exception' => $exception]
                 );

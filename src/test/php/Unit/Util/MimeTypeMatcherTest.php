@@ -13,6 +13,7 @@ namespace Itspire\FrameworkExtraBundle\Tests\Unit\Util;
 use Itspire\Common\Enum\MimeType;
 use Itspire\FrameworkExtraBundle\Util\MimeTypeMatcher;
 use Itspire\FrameworkExtraBundle\Util\MimeTypeMatcherInterface;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 class MimeTypeMatcherTest extends TestCase
@@ -33,7 +34,7 @@ class MimeTypeMatcherTest extends TestCase
         parent::tearDown();
     }
 
-    /** @test */
+    #[Test]
     public function findMimeTypeMatchWildcardTest(): void
     {
         static::assertEquals(
@@ -49,7 +50,7 @@ class MimeTypeMatcherTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function findMimeTypeMatchSingleMatchTest(): void
     {
         static::assertEquals(
@@ -65,7 +66,7 @@ class MimeTypeMatcherTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function findMimeTypeMatchLeadingWildcardTest(): void
     {
         static::assertEquals(
@@ -81,7 +82,7 @@ class MimeTypeMatcherTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function findMimeTypeMatchEndingWildcardTest(): void
     {
         static::assertEquals(
@@ -97,7 +98,7 @@ class MimeTypeMatcherTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function findMimeTypeMatchNoMatchTest(): void
     {
         static::assertNull(

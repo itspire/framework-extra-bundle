@@ -22,7 +22,10 @@ class SecurityProcessor extends AbstractAttributeProcessor
     }
 
     /** @param Security $attribute */
-    protected function handleProcess(ControllerEvent $event, AttributeInterface $attribute): void
-    {
+    protected function handleProcess(
+        ControllerEvent $event,
+        AttributeInterface $attribute,
+        ?\ReflectionParameter $reflectionParameter = null
+    ): void {
     }
 }

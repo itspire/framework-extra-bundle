@@ -15,6 +15,8 @@ use Itspire\FrameworkExtraBundle\Attribute\Consumes;
 use Itspire\FrameworkExtraBundle\Attribute\Security;
 use Itspire\FrameworkExtraBundle\Tests\Unit\Fixtures\FixtureController;
 use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor\SecurityProcessor;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -39,7 +41,7 @@ class SecurityProcessorTest extends TestCase
         unset($this->securityProcessor, $this->loggerMock);
     }
 
-    public function supportsProvider(): array
+    public static function supportsProvider(): array
     {
         return [
             'notSupported' => [new Consumes(), false],
@@ -47,16 +49,14 @@ class SecurityProcessorTest extends TestCase
         ];
     }
 
-    /**
-     * @test
-     * @dataProvider supportsProvider
-     */
+    #[Test]
+    #[DataProvider('supportsProvider')]
     public function supportsTest($attribute, $result): void
     {
         static::assertEquals(expected: $result, actual: $this->securityProcessor->supports($attribute));
     }
 
-    /** @test */
+    #[Test]
     public function processTest(): void
     {
         $httpResponseStatus = HttpResponseStatus::HTTP_FORBIDDEN;

@@ -12,6 +12,7 @@ namespace Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor;
 
 use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
+use Itspire\FrameworkExtraBundle\Attribute\AbstractParamAttribute;
 use Itspire\FrameworkExtraBundle\Attribute\AttributeInterface;
 use Itspire\FrameworkExtraBundle\Attribute\BodyParam;
 use Itspire\FrameworkExtraBundle\Attribute\FileParam;
@@ -26,60 +27,70 @@ use Symfony\Component\HttpKernel\Event\ControllerEvent;
 
 abstract class AbstractParamAttributeProcessor extends AbstractAttributeProcessor
 {
-    public function __construct(protected TypeCheckHandlerInterface $typeCheckHandler, LoggerInterface $logger)
+    public function __construct(protected readonly TypeCheckHandlerInterface $typeCheckHandler, LoggerInterface $logger)
     {
         parent::__construct($logger);
     }
 
-    /** @param ParamAttributeInterface $attribute */
-    protected function handleProcess(ControllerEvent $event, AttributeInterface $attribute): void
-    {
+    /** @param AbstractParamAttribute $attribute */
+    protected function handleProcess(
+        ControllerEvent $event,
+        AttributeInterface $attribute,
+        ?\ReflectionParameter $reflectionParameter = null
+    ): void {
+        $this->resolveName($event->getRequest(), $attribute, $reflectionParameter);
         $this->checkForConflictingNames($event->getRequest(), $attribute);
 
-        $reflectionParameter = $this->findMatchingMethodParameter($attribute->getName(), $event->getController());
+        $reflectionParameter ??= $this->findMatchingMethodParameter($attribute->name, $event->getController());
 
         // If native type is provided on the method, its definition takes precedence over the one on the attribute
         if (null !== $reflectionParameter->getType()) {
-            $attribute
-                ->setType($reflectionParameter->getType()->getName())
-                ->setRequired(!$reflectionParameter->getType()->allowsNull());
+            $attribute->type = $reflectionParameter->getType()->getName();
+            $attribute->required = !$reflectionParameter->getType()->allowsNull();
         }
 
         // If native default value is provided, it will take precedence over the one on the attribute
         if ($reflectionParameter->isDefaultValueAvailable()) {
-            $attribute->setDefault($reflectionParameter->getDefaultValue());
+            $attribute->default = $reflectionParameter->getDefaultValue();
         }
 
         $paramValue = $this->getParamValue($event->getRequest(), $attribute);
 
-        $this->validateValue($attribute, $event, $paramValue);
+        $this->validateValue($event, $attribute, $paramValue);
     }
 
-    protected function getParamValue(Request $request, ParamAttributeInterface $attribute): mixed
+    protected function getParamValue(Request $request, AbstractParamAttribute $attribute): mixed
     {
         return match ($attribute::class) {
             BodyParam::class => $request->getContent() ?: null,
-            FileParam::class => $request->files->get(key: $attribute->getName(), default: null),
+            FileParam::class => $request->files->get(key: $attribute->name, default: null),
             HeaderParam::class => $request->headers->get(
-                key: $attribute->getHeaderName(),
-                default: $attribute->getDefault()
+                key: $attribute->headerName ?? $attribute->name,
+                default: $attribute->default
             ),
-            QueryParam::class => $request->query->has($attribute->getName())
-                ? $request->query->all()[$attribute->getName()]
-                : $attribute->getDefault(),
-            RequestParam::class => $request->request->has($attribute->getName())
-                ? $request->request->all()[$attribute->getName()]
-                : $attribute->getDefault(),
+            QueryParam::class => $request->query->has($attribute->name)
+                ? $request->query->all()[$attribute->name]
+                : $attribute->default,
+            RequestParam::class => $request->request->has($attribute->name)
+                ? $request->request->all()[$attribute->name]
+                : $attribute->default,
         };
     }
 
-    private function checkForConflictingNames(Request $request, ParamAttributeInterface $attribute): void
-    {
-        if (true === $request->attributes->has($attribute->getName())) {
+    private function resolveName(
+        Request $request,
+        AbstractParamAttribute $attribute,
+        ?\ReflectionParameter $reflectionParameter = null
+    ): void {
+        if (null !== $reflectionParameter) {
+            $attribute->name ??= $reflectionParameter->getName();
+        }
+
+        if (null === $attribute->name) {
             $this->logger->error(
                 vsprintf(
-                    format: 'Name conflict detected for parameter %s in route %s.',
-                    values: [$attribute->getName(), $request->attributes->get(key: '_route')]
+                    format: 'No name specified for parameter %s in route %s.',
+                    values: [$attribute::class, $request->attributes->get(key: '_route')]
                 )
             );
 
@@ -87,7 +98,21 @@ abstract class AbstractParamAttributeProcessor extends AbstractAttributeProcesso
         }
     }
 
-    private function validateValue(ParamAttributeInterface $attribute, ControllerEvent $event, mixed $value): void
+    private function checkForConflictingNames(Request $request, AbstractParamAttribute $attribute): void
+    {
+        if (true === $request->attributes->has($attribute->name)) {
+            $this->logger->error(
+                vsprintf(
+                    format: 'Name conflict detected for parameter %s in route %s.',
+                    values: [$attribute->name, $request->attributes->get(key: '_route')]
+                )
+            );
+
+            throw new HttpException(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private function validateValue(ControllerEvent $event, AbstractParamAttribute $attribute, mixed $value): void
     {
         $this->checkMissingValue($attribute, $event->getRequest(), $value);
 
@@ -96,7 +121,7 @@ abstract class AbstractParamAttributeProcessor extends AbstractAttributeProcesso
             $this->checkParamRequirements($attribute, $value);
         }
 
-        $event->getRequest()->attributes->set($attribute->getName(), $value);
+        $event->getRequest()->attributes->set($attribute->name, $value);
     }
 
     private function findMatchingMethodParameter(string $paramName, callable $controller): \ReflectionParameter
@@ -124,13 +149,13 @@ abstract class AbstractParamAttributeProcessor extends AbstractAttributeProcesso
         throw new HttpException(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR);
     }
 
-    private function checkMissingValue(ParamAttributeInterface $attribute, Request $request, mixed $value): void
+    private function checkMissingValue(AbstractParamAttribute $attribute, Request $request, mixed $value): void
     {
-        if (in_array($value, ['', null], true) && true === $attribute->isRequired()) {
+        if (in_array($value, ['', null], true) && true === $attribute->required) {
             $this->logger->alert(
                 vsprintf(
                     format: '"%s" defined on route "%s" has no matching "%s" parameter in the request.',
-                    values: [$attribute::class, $request->attributes->get(key: '_route'), $attribute->getName()]
+                    values: [$attribute::class, $request->attributes->get(key: '_route'), $attribute->name]
                 )
             );
 
@@ -138,25 +163,25 @@ abstract class AbstractParamAttributeProcessor extends AbstractAttributeProcesso
         }
     }
 
-    private function checkParamRequirements(ParamAttributeInterface $attribute, mixed $value): void
+    private function checkParamRequirements(AbstractParamAttribute $attribute, mixed $value): void
     {
         if (is_array($value)) {
             $self = $this;
             array_walk(
                 $value,
-                function ($data) use ($attribute, $self) {
+                static function ($data) use ($attribute, $self) {
                     $self->checkParamRequirements($attribute, $data);
                 }
             );
         } elseif (
             null !== $value
-            && null !== $attribute->getRequirements()
-            && !preg_match('#^(' . $attribute->getRequirements() . ')$#xs', (string) $value)
+            && null !== $attribute->requirements
+            && !preg_match('#^(' . $attribute->requirements . ')$#xs', (string) $value)
         ) {
             $this->logger->alert(
                 vsprintf(
                     format: 'Parameter value for %s does not match defined requirement %s.',
-                    values: [$attribute->getName(), $attribute->getRequirements()]
+                    values: [$attribute->name, $attribute->requirements]
                 )
             );
 

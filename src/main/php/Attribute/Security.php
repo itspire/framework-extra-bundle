@@ -11,12 +11,14 @@ declare(strict_types=1);
 namespace Itspire\FrameworkExtraBundle\Attribute;
 
 use Itspire\Common\Enum\Http\HttpResponseStatus;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security as BaseSecurity;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security as SensioSecurity;
+use Symfony\Component\Security\Http\Attribute\IsGranted as SymfonyIsGranted;
 
+/** @deprecated Use {@see SymfonyIsGranted} with Expression argument instead */
 #[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD)]
-class Security extends BaseSecurity implements AttributeInterface
+class Security extends SensioSecurity implements AttributeInterface
 {
-    public function __construct(string $expression, private ?HttpResponseStatus $responseStatus = null)
+    public function __construct(string $expression, private readonly ?HttpResponseStatus $responseStatus = null)
     {
         parent::__construct($expression, $responseStatus?->getDescription(), $responseStatus?->value);
     }

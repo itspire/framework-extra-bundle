@@ -10,19 +10,23 @@ declare(strict_types=1);
 
 namespace Itspire\FrameworkExtraBundle\Attribute;
 
-#[\Attribute(\Attribute::TARGET_METHOD)]
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+
+/** @deprecated Use {@see MapRequestPayload} instead */
+#[\Attribute(\Attribute::TARGET_METHOD | \Attribute::TARGET_PARAMETER)]
 class BodyParam extends AbstractParamAttribute
 {
     public function __construct(
-        string $name,
+        ?string $name = null,
         ?string $type = null,
-        private ?string $class = null,
+        public ?string $class = null,
         bool $required = true,
         ?string $requirements = null
     ) {
         parent::__construct($name, $type, $required, $requirements);
     }
 
+    /** @deprecated Use "class" property directly. */
     public function getClass(): ?string
     {
         return $this->class;

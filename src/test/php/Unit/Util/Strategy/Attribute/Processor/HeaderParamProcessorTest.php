@@ -16,6 +16,8 @@ use Itspire\FrameworkExtraBundle\Attribute\HeaderParam;
 use Itspire\FrameworkExtraBundle\Tests\Unit\Fixtures\FixtureController;
 use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor\HeaderParamProcessor;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\TypeCheckHandlerInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -43,7 +45,7 @@ class HeaderParamProcessorTest extends TestCase
         unset($this->typeCheckHandlerMock, $this->headerParamProcessor);
     }
 
-    public function supportsProvider(): array
+    public static function supportsProvider(): array
     {
         return [
             'notSupported' => [new Consumes(), false],
@@ -51,23 +53,21 @@ class HeaderParamProcessorTest extends TestCase
         ];
     }
 
-    /**
-     * @test
-     * @dataProvider supportsProvider
-     */
+    #[Test]
+    #[DataProvider('supportsProvider')]
     public function supportsTest($attribute, $result): void
     {
         static::assertEquals(expected: $result, actual: $this->headerParamProcessor->supports($attribute));
     }
 
-    /** @test */
+    #[Test]
     public function processDefaultTest(): void
     {
         $headerParam = $this->getHeaderParam(MimeType::APPLICATION_JSON->value);
         $request = new Request();
 
         $this->typeCheckHandlerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('process')
             ->with($headerParam, $request, MimeType::APPLICATION_JSON->value)
             ->willReturn(MimeType::APPLICATION_JSON->value);
@@ -88,14 +88,14 @@ class HeaderParamProcessorTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function processTest(): void
     {
         $headerParam = $this->getHeaderParam();
         $request = new Request(server: ['CONTENT_TYPE' => MimeType::APPLICATION_XML->value]);
 
         $this->typeCheckHandlerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('process')
             ->with($headerParam, $request, MimeType::APPLICATION_XML->value)
             ->willReturn(MimeType::APPLICATION_XML->value);

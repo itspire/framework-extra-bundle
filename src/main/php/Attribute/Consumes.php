@@ -13,12 +13,19 @@ namespace Itspire\FrameworkExtraBundle\Attribute;
 use Itspire\Common\Enum\MimeType;
 use JMS\Serializer\Exclusion\GroupsExclusionStrategy;
 
-#[\Attribute(\Attribute::TARGET_METHOD)]
+#[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD)]
 class Consumes implements AttributeInterface
 {
+    /** @var string[] */
     private array $consumableContentTypes = [];
+
+    /** @var string[] */
     private array $deserializationGroups = [];
 
+    /**
+     * @param string|string[]|MimeType|MimeType[] $consumableContentTypes
+     * @param string|string[] $deserializationGroups
+     */
     public function __construct(
         mixed $consumableContentTypes = [],
         mixed $deserializationGroups = []
@@ -46,7 +53,7 @@ class Consumes implements AttributeInterface
 
         if (!empty($consumableContentTypes)) {
             $this->consumableContentTypes = array_map(
-                fn (mixed $consumableContentType): string => $consumableContentType instanceof MimeType
+                static fn (mixed $consumableContentType): string => $consumableContentType instanceof MimeType
                     ? $consumableContentType->value
                     : $consumableContentType,
                 $consumableContentTypes

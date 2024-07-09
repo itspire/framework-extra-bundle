@@ -15,6 +15,8 @@ use Itspire\FrameworkExtraBundle\Attribute\RequestParam;
 use Itspire\FrameworkExtraBundle\Tests\Unit\Fixtures\FixtureController;
 use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor\RequestParamProcessor;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\TypeCheckHandlerInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -42,7 +44,7 @@ class RequestParamProcessorTest extends TestCase
         unset($this->requestParamProcessor, $this->typeCheckHandlerMock);
     }
 
-    public function supportsProvider(): array
+    public static function supportsProvider(): array
     {
         return [
             'notSupported' => [new Consumes([]), false],
@@ -50,23 +52,21 @@ class RequestParamProcessorTest extends TestCase
         ];
     }
 
-    /**
-     * @test
-     * @dataProvider supportsProvider
-     */
+    #[Test]
+    #[DataProvider('supportsProvider')]
     public function supportsTest($attribute, $result): void
     {
         static::assertEquals(expected: $result, actual: $this->requestParamProcessor->supports($attribute));
     }
 
-    /** @test */
+    #[Test]
     public function processDefaultTest(): void
     {
         $requestParam = $this->getRequestParam(10);
         $request = new Request();
 
         $this->typeCheckHandlerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('process')
             ->with($requestParam, $request, 10)
             ->willReturn(10);
@@ -84,14 +84,14 @@ class RequestParamProcessorTest extends TestCase
         static::assertEquals(expected: 10, actual: $request->attributes->get(key: 'param'));
     }
 
-    /** @test */
+    #[Test]
     public function processTest(): void
     {
         $requestParam = $this->getRequestParam();
         $request = new Request(request: ['param' => 1]);
 
         $this->typeCheckHandlerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('process')
             ->with($requestParam, $request, 1)
             ->willReturn(1);

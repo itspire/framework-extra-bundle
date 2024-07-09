@@ -4,8 +4,8 @@
 # All Right Reserved.
 #
 variables:
-    PHP_IMAGE: $CI_REGISTRY/devops/docker-webservers/php-fpm-dev:4.0.4
-    COMPOSER_IMAGE: $CI_REGISTRY/itspire-devops/webservers/composer-ci:3.0.1
+    PHP_IMAGE: $CI_REGISTRY/devops/docker-webservers/php-fpm-dev:5.0.1
+    COMPOSER_IMAGE: $CI_REGISTRY/itspire-devops/webservers/composer-ci:4.0.0
 
 default:
     cache:
@@ -44,14 +44,6 @@ deps:
                 -e DEV_UID=$(id -u) \
                 -e DEV_GID=$(id -g) \
                 $COMPOSER_IMAGE install --prefer-dist
-        - >
-            docker run \
-                --rm \
-                -v $(pwd):/project \
-                -w /project \
-                -e DEV_UID=$(id -u) \
-                -e DEV_GID=$(id -g) \
-                $COMPOSER_IMAGE exec -vv -- simple-phpunit install
     after_script:
         - docker logout $CI_REGISTRY
 
@@ -104,7 +96,7 @@ test:
                 -w /project \
                 -e DEV_UID=$(id -u) \
                 -e DEV_GID=$(id -g) \
-            $PHP_IMAGE vendor/bin/simple-phpunit --configuration /project/phpunit.xml
+            $PHP_IMAGE vendor/bin/phpunit --configuration /project/phpunit.xml
     after_script:
         - docker logout $CI_REGISTRY
 

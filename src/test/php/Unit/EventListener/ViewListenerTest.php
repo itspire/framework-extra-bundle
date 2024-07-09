@@ -19,6 +19,7 @@ use Itspire\FrameworkExtraBundle\EventListener\ViewListener;
 use Itspire\FrameworkExtraBundle\Tests\TestApp\Model\TestObject;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -59,7 +60,7 @@ class ViewListenerTest extends TestCase
         parent::tearDown();
     }
 
-    /** @test */
+    #[Test]
     public function onKernelViewHandledRouteNotCalledTest(): void
     {
         $this->viewListener->onKernelView(
@@ -69,7 +70,7 @@ class ViewListenerTest extends TestCase
         static::assertNull(actual: $this->event->getResponse());
     }
 
-    /** @test */
+    #[Test]
     public function onKernelViewFileResultTest(): void
     {
         $request = new Request(
@@ -102,7 +103,7 @@ class ViewListenerTest extends TestCase
         unlink($filePath);
     }
 
-    /** @test */
+    #[Test]
     public function onKernelViewSerializationErrorTest(): void
     {
         $this->expectException(HttpException::class);
@@ -129,7 +130,7 @@ class ViewListenerTest extends TestCase
         );
 
         $this->serializerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('serialize')
             ->with($testObject, 'json', static::isInstanceOf(SerializationContext::class))
             ->willThrowException(new \Exception());
@@ -139,7 +140,7 @@ class ViewListenerTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function onKernelViewRenderErrorTest(): void
     {
         $this->expectException(HttpException::class);
@@ -176,13 +177,13 @@ class ViewListenerTest extends TestCase
         );
 
         $this->serializerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('serialize')
             ->with($testObject, 'json', static::isInstanceOf(SerializationContext::class))
             ->willReturn($json);
 
         $this->twigMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('render')
             ->with('@ItspireFrameworkExtra/response.html.twig', ['controllerResult' => $json, 'format' => 'json'])
             ->willThrowException(new \Exception());
@@ -192,11 +193,11 @@ class ViewListenerTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function onKernelViewRenderHtmlArrayTest(): void
     {
         $testArray = ['testProperty' => 'test', 'testProperty2' => 2];
-        $testJson = json_encode($testArray);
+        $testJson = json_encode($testArray, JSON_THROW_ON_ERROR);
 
         $html = <<<HTML
             <html lang="fr">
@@ -230,13 +231,13 @@ class ViewListenerTest extends TestCase
         );
 
         $this->serializerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('serialize')
             ->with($testArray, 'json', static::isInstanceOf(SerializationContext::class))
             ->willReturn($testJson);
 
         $this->twigMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('render')
             ->with('@ItspireFrameworkExtra/response.html.twig', ['controllerResult' => $testJson, 'format' => 'json'])
             ->willReturn($html);
@@ -252,7 +253,7 @@ class ViewListenerTest extends TestCase
         static::assertEquals(expected: $html, actual: $event->getResponse()->getContent());
     }
 
-    /** @test */
+    #[Test]
     public function onKernelViewRenderJsonArrayTest(): void
     {
         $testArray = ['testProperty' => 'test', 'testProperty2' => 2];
@@ -283,7 +284,7 @@ class ViewListenerTest extends TestCase
         );
 
         $this->serializerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('serialize')
             ->with($testArray, 'json', static::isInstanceOf(SerializationContext::class))
             ->willReturn($testJson);
@@ -299,7 +300,7 @@ class ViewListenerTest extends TestCase
         static::assertEquals(expected: $testJson, actual: $event->getResponse()->getContent());
     }
 
-    /** @test */
+    #[Test]
     public function onKernelViewNoContentTest(): void
     {
         $request = new Request(

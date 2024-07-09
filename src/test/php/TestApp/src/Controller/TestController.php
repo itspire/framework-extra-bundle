@@ -27,6 +27,9 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Serializer\Encoder\JsonEncode;
+use Symfony\Component\Serializer\Encoder\XmlEncoder;
+use Symfony\Component\Serializer\SerializerInterface;
 
 class TestController extends AbstractController
 {
@@ -50,10 +53,68 @@ class TestController extends AbstractController
             'Header Param' => $contentType,
         ];
 
+        return $this->json($result);
+    }
+
+    #[Route(path: '/inline-json', name: 'inlineJsonTest', methods: [Request::METHOD_POST])]
+    #[ItspireFrameworkExtra\Consumes([MimeType::APPLICATION_JSON])]
+    #[ItspireFrameworkExtra\Produces([MimeType::APPLICATION_JSON])]
+    public function inlineJson(
+        SerializerInterface $serializer,
+        #[ItspireFrameworkExtra\HeaderParam(headerName: 'Content-Type')]
+        string $contentType,
+        #[ItspireFrameworkExtra\RequestParam]
+        int $rParam,
+        #[ItspireFrameworkExtra\BodyParam]
+        TestObject $bParam,
+        #[ItspireFrameworkExtra\QueryParam(requirements: '\w+')]
+        ?string $qParam = null
+    ): Response {
+        $result = [
+            'Query Param' => $qParam,
+            'Request Param' => $rParam,
+            'Body Param' => $bParam->getTestProperty(),
+            'Header Param' => $contentType,
+        ];
+
         return new Response(
-            json_encode($result),
+            $serializer->serialize(
+                $result,
+                'json',
+                [
+                    JsonEncode::OPTIONS => \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_PRESERVE_ZERO_FRACTION,
+                ]
+            ),
             HttpResponseStatus::HTTP_OK->value,
             ['Content-Type' => MimeType::APPLICATION_JSON->value]
+        );
+    }
+
+    #[Route(path: '/inline-xml', name: 'inlineXmlTest', methods: [Request::METHOD_POST])]
+    #[ItspireFrameworkExtra\Consumes([MimeType::APPLICATION_XML])]
+    #[ItspireFrameworkExtra\Produces([MimeType::APPLICATION_XML])]
+    public function inlineXml(
+        SerializerInterface $serializer,
+        #[ItspireFrameworkExtra\HeaderParam(headerName: 'Content-Type')]
+        string $contentType,
+        #[ItspireFrameworkExtra\RequestParam]
+        int $rParam,
+        #[ItspireFrameworkExtra\BodyParam]
+        TestObject $bParam,
+        #[ItspireFrameworkExtra\QueryParam(requirements: '\w+')]
+        ?string $qParam = null
+    ): Response {
+        $result = [
+            'Query Param' => $qParam,
+            'Request Param' => $rParam,
+            'Body Param' => $bParam->getTestProperty(),
+            'Header Param' => $contentType,
+        ];
+
+        return new Response(
+            $serializer->serialize($result, 'xml', [XmlEncoder::FORMAT_OUTPUT => true]),
+            HttpResponseStatus::HTTP_OK->value,
+            ['Content-Type' => MimeType::APPLICATION_XML->value]
         );
     }
 
@@ -81,7 +142,7 @@ class TestController extends AbstractController
     #[Template('@ItspireFrameworkExtra/response.html.twig')]
     public function regularWithTemplate(): array
     {
-        return ['controllerResult' => json_encode(['testWithTemplate']), 'format' => 'json'];
+        return ['controllerResult' => json_encode(['testWithTemplate'], JSON_THROW_ON_ERROR), 'format' => 'json'];
     }
 
     #[ItspireFrameworkExtra\Route(path: '/exception', name: 'exceptionTest', methods: [HttpMethod::GET])]
@@ -116,14 +177,14 @@ class TestController extends AbstractController
         return new File(realpath(__DIR__ . '/../../../../resources/test.txt'));
     }
 
-    #[ItspireFrameworkExtra\Route(path: '/securitySuccess', name: 'securitySuccessTest', methods: [HttpMethod::GET])]
+    #[ItspireFrameworkExtra\Route(path: '/securitySuccess', name: 'successSecurityTest', methods: [HttpMethod::GET])]
     #[ItspireFrameworkExtra\Security(expression: 'true', responseStatus: HttpResponseStatus::HTTP_FORBIDDEN)]
     public function securitySuccess(): Response
     {
         return new Response('success', HttpResponseStatus::HTTP_OK->value);
     }
 
-    #[ItspireFrameworkExtra\Route(path: '/securityFail', name: 'securityFailTest', methods: [HttpMethod::GET])]
+    #[ItspireFrameworkExtra\Route(path: '/securityFail', name: 'failSecurityTest', methods: [HttpMethod::GET])]
     #[ItspireFrameworkExtra\Security(expression: 'false', responseStatus: HttpResponseStatus::HTTP_FORBIDDEN)]
     public function securityFail(): Response
     {

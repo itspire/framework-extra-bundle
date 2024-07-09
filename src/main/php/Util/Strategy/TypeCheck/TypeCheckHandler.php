@@ -12,6 +12,7 @@ namespace Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck;
 
 use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
+use Itspire\FrameworkExtraBundle\Attribute\AbstractParamAttribute;
 use Itspire\FrameworkExtraBundle\Attribute\ParamAttributeInterface;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\Processor\TypeCheckProcessorInterface;
 use Psr\Log\LoggerInterface;
@@ -22,7 +23,7 @@ class TypeCheckHandler implements TypeCheckHandlerInterface
     /** @var TypeCheckProcessorInterface[] */
     private array $processors = [];
 
-    public function __construct(protected LoggerInterface $logger, iterable $processors = [])
+    public function __construct(protected readonly LoggerInterface $logger, iterable $processors = [])
     {
         foreach ($processors as $processor) {
             $this->registerProcessor($processor);
@@ -38,18 +39,18 @@ class TypeCheckHandler implements TypeCheckHandlerInterface
         return $this;
     }
 
-    public function process(ParamAttributeInterface $paramAttribute, Request $request, mixed $value): mixed
+    public function process(AbstractParamAttribute $paramAttribute, Request $request, mixed $value): mixed
     {
-        if (null === $paramAttribute->getType()) {
+        if (null === $paramAttribute->type) {
             return $value;
         }
 
-        if (in_array($value, ['', null], true) && false === $paramAttribute->isRequired()) {
+        if (in_array($value, ['', null], true) && false === $paramAttribute->required) {
             return $value;
         }
 
         foreach ($this->processors as $processor) {
-            if (false === $processor->supports($paramAttribute->getType())) {
+            if (false === $processor->supports($paramAttribute->type)) {
                 continue;
             }
 
@@ -60,8 +61,8 @@ class TypeCheckHandler implements TypeCheckHandlerInterface
             vsprintf(
                 format: 'No processor found to check expected value type "%s" for param "%s" on route "%s".',
                 values: [
-                    $paramAttribute->getType(),
-                    $paramAttribute->getName(),
+                    $paramAttribute->type,
+                    $paramAttribute->name,
                     $request->attributes->get(key: '_route'),
                 ]
             )

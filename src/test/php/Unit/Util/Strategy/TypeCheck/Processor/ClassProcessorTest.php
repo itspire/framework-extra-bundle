@@ -15,6 +15,8 @@ use Itspire\Exception\Http\HttpException;
 use Itspire\FrameworkExtraBundle\Attribute\BodyParam;
 use Itspire\FrameworkExtraBundle\Tests\TestApp\Model\TestObject;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\Processor\ClassProcessor;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -37,7 +39,7 @@ class ClassProcessorTest extends TestCase
         unset($this->classProcessor, $this->loggerMock);
     }
 
-    public function supportsProvider(): array
+    public static function supportsProvider(): array
     {
         return [
             'notSupported' => ['int', false],
@@ -45,16 +47,14 @@ class ClassProcessorTest extends TestCase
         ];
     }
 
-    /**
-     * @test
-     * @dataProvider supportsProvider
-     */
+    #[Test]
+    #[DataProvider('supportsProvider')]
     public function supportsTest(string $type, bool $result): void
     {
         static::assertEquals(expected: $result, actual: $this->classProcessor->supports($type));
     }
 
-    /** @test */
+    #[Test]
     public function processUnsupportedTest(): void
     {
         $exceptionDefinition = HttpExceptionDefinition::HTTP_BAD_REQUEST;
@@ -67,7 +67,7 @@ class ClassProcessorTest extends TestCase
         $request = new Request(attributes: ['_route' => 'test']);
 
         $this->loggerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('alert')
             ->with(
                 sprintf(
@@ -79,7 +79,7 @@ class ClassProcessorTest extends TestCase
         $this->classProcessor->process($paramAttribute, $request, 1);
     }
 
-    /** @test */
+    #[Test]
     public function processTest(): void
     {
         $paramAttribute = new BodyParam(name: 'param', type: 'class', class: TestObject::class);

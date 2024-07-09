@@ -12,11 +12,15 @@ namespace Itspire\FrameworkExtraBundle\Attribute;
 
 interface ParamAttributeInterface extends AttributeInterface
 {
+    /** @deprecated Use "name" property directly. */
     public function getName(): ?string;
 
+    /** @deprecated Use "type" property directly. */
     public function getType(): ?string;
 
+    /** @deprecated Use "requirements" property directly. */
     public function getRequirements(): ?string;
 
+    /** @deprecated Use "required" property directly. */
     public function isRequired(): bool;
 }

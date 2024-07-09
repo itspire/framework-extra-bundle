@@ -10,11 +10,14 @@ declare(strict_types=1);
 
 namespace Itspire\FrameworkExtraBundle\Attribute;
 
-#[\Attribute(\Attribute::IS_REPEATABLE | \Attribute::TARGET_METHOD)]
+use Itspire\Common\Enum\MimeType;
+
+/** @deprecated Use {@see MapQueryParameter} instead */
+#[\Attribute(\Attribute::TARGET_METHOD | \Attribute::TARGET_PARAMETER | \Attribute::IS_REPEATABLE)]
 class QueryParam extends AbstractParamAttribute
 {
     public function __construct(
-        string $name,
+        ?string $name = null,
         ?string $type = null,
         bool $required = false,
         ?string $requirements = null,

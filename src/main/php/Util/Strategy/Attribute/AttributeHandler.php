@@ -36,7 +36,7 @@ class AttributeHandler implements AttributeHandlerInterface
     /** @var AttributeProcessorInterface[] */
     protected array $prioritizedProcessors = [];
 
-    public function __construct(protected LoggerInterface $logger, iterable $processors = [])
+    public function __construct(protected readonly LoggerInterface $logger, iterable $processors = [])
     {
         foreach ($processors as $processor) {
             $this->registerProcessor($processor);
@@ -68,18 +68,21 @@ class AttributeHandler implements AttributeHandlerInterface
         return $this;
     }
 
-    public function process(ControllerEvent $event, AttributeInterface $attribute): void
-    {
+    public function process(
+        ControllerEvent $event,
+        AttributeInterface $attribute,
+        ?\ReflectionParameter $reflectionParameter = null
+    ): void {
         // Handle prioritized first
         foreach ($this->prioritizedProcessors as $processor) {
-            if ($this->handleProcess($event, $processor, $attribute)) {
+            if ($this->handleProcess($event, $processor, $attribute, $reflectionParameter)) {
                 return;
             }
         }
 
         // Then handle the others
         foreach ($this->processors as $processor) {
-            if ($this->handleProcess($event, $processor, $attribute)) {
+            if ($this->handleProcess($event, $processor, $attribute, $reflectionParameter)) {
                 return;
             }
         }
@@ -97,13 +100,14 @@ class AttributeHandler implements AttributeHandlerInterface
     private function handleProcess(
         ControllerEvent $event,
         AttributeProcessorInterface $processor,
-        AttributeInterface $attribute
+        AttributeInterface $attribute,
+        ?\ReflectionParameter $reflectionParameter = null
     ): bool {
         if (false === $processor->supports($attribute)) {
             return false;
         }
 
-        $processor->process($event, $attribute);
+        $processor->process($event, $attribute, $reflectionParameter);
 
         return true;
     }

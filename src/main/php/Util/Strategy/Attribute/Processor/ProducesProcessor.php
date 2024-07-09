@@ -23,8 +23,8 @@ use Symfony\Component\HttpKernel\Event\ControllerEvent;
 class ProducesProcessor extends AbstractAttributeProcessor
 {
     public function __construct(
-        private MimeTypeMatcherInterface $mimeTypeMatcher,
-        private bool $allowHTMLResponseContentType,
+        private readonly MimeTypeMatcherInterface $mimeTypeMatcher,
+        private readonly bool $allowHTMLResponseContentType,
         LoggerInterface $logger
     ) {
         parent::__construct($logger);
@@ -35,8 +35,12 @@ class ProducesProcessor extends AbstractAttributeProcessor
         return $attribute instanceof Produces;
     }
 
-    protected function handleProcess(ControllerEvent $event, AttributeInterface $attribute): void
-    {
+    /** @param Produces $attribute */
+    protected function handleProcess(
+        ControllerEvent $event,
+        AttributeInterface $attribute,
+        ?\ReflectionParameter $reflectionParameter = null
+    ): void {
         $request = $event->getRequest();
 
         $this->checkAlreadyProcessed(

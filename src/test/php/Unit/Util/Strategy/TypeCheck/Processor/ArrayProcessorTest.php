@@ -14,6 +14,8 @@ use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
 use Itspire\FrameworkExtraBundle\Attribute\QueryParam;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\Processor\ArrayProcessor;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -36,7 +38,7 @@ class ArrayProcessorTest extends TestCase
         unset($this->arrayProcessor, $this->loggerMock);
     }
 
-    public function supportsProvider(): array
+    public static function supportsProvider(): array
     {
         return [
             'notSupported' => ['int', false],
@@ -44,16 +46,14 @@ class ArrayProcessorTest extends TestCase
         ];
     }
 
-    /**
-     * @test
-     * @dataProvider supportsProvider
-     */
+    #[Test]
+    #[DataProvider('supportsProvider')]
     public function supportsTest(string $type, bool $result): void
     {
         static::assertEquals(expected: $result, actual: $this->arrayProcessor->supports($type));
     }
 
-    /** @test */
+    #[Test]
     public function processUnsupportedTest(): void
     {
         $exceptionDefinition = HttpExceptionDefinition::HTTP_BAD_REQUEST;
@@ -66,14 +66,14 @@ class ArrayProcessorTest extends TestCase
         $request = new Request(attributes: ['_route' => 'test']);
 
         $this->loggerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('alert')
             ->with('Invalid value type integer provided for parameter param on route test : expected one of array.');
 
         $this->arrayProcessor->process(paramAttribute: $paramAttribute, request: $request, value: 1);
     }
 
-    /** @test */
+    #[Test]
     public function processTest(): void
     {
         $paramAttribute = new QueryParam(name: 'param', type: 'array');

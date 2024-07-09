@@ -12,6 +12,7 @@ namespace Itspire\FrameworkExtraBundle\Tests\Unit\DependencyInjection;
 
 use Itspire\FrameworkExtraBundle\DependencyInjection\Configuration;
 use Itspire\FrameworkExtraBundle\DependencyInjection\ItspireFrameworkExtraExtension;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -19,10 +20,8 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class ItspireFrameworkExtraExtensionTest extends TestCase
 {
-    /**
-     * @test
-     * @throws \Exception
-     */
+    /** @throws \Exception */
+    #[Test]
     public function loadWithAllowedHtmlResponseContentTypeTest(): void
     {
         $container = $this->getContainerBuilder();
@@ -32,10 +31,8 @@ class ItspireFrameworkExtraExtensionTest extends TestCase
         static::assertTrue(condition: $container->getParameter(Configuration::ALLOW_HTML_RESPONSE_PARAMETER));
     }
 
-    /**
-     * @test
-     * @throws \Exception
-     */
+    /** @throws \Exception */
+    #[Test]
     public function loadWithDisallowedHtmlResponseContentTypeTest(): void
     {
         $container = $this->getContainerBuilder();
@@ -45,10 +42,8 @@ class ItspireFrameworkExtraExtensionTest extends TestCase
         static::assertFalse(condition: $container->getParameter(Configuration::ALLOW_HTML_RESPONSE_PARAMETER));
     }
 
-    /**
-     * @test
-     * @throws \Exception
-     */
+    /** @throws \Exception */
+    #[Test]
     public function loadWithDefaultAllowHtmlResponseContentTypeTest(): void
     {
         $container = $this->getContainerBuilder();

@@ -10,12 +10,18 @@ declare(strict_types=1);
 
 namespace Itspire\FrameworkExtraBundle\Attribute;
 
-#[\Attribute(\Attribute::TARGET_METHOD)]
+use JetBrains\PhpStorm\Deprecated;
+
+#[\Attribute(\Attribute::TARGET_METHOD | \Attribute::TARGET_PARAMETER | \Attribute::IS_REPEATABLE)]
 class HeaderParam extends AbstractParamAttribute
 {
+    /**
+     * @param string $name If attribute is on method OR on param and header real name is not identical to param name
+     * @param string $headerName If attribute is on method and header real name is not identical to param name
+     */
     public function __construct(
-        string $name,
-        private ?string $headerName = null,
+        ?string $name = null,
+        public ?string $headerName = null,
         ?string $type = null,
         bool $required = true,
         ?string $requirements = null,
@@ -28,6 +34,7 @@ class HeaderParam extends AbstractParamAttribute
         }
     }
 
+    /** @deprecated Use "headerName" property directly. */
     public function getHeaderName(): ?string
     {
         return $this->headerName;

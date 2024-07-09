@@ -15,6 +15,7 @@ use Itspire\FrameworkExtraBundle\Attribute as ItspireFrameworkExtra;
 use Itspire\FrameworkExtraBundle\EventListener\ControllerListener;
 use Itspire\FrameworkExtraBundle\Tests\Unit\Fixtures\FixtureController;
 use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\AttributeHandlerInterface;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -48,8 +49,8 @@ class ControllerListenerTest extends TestCase
         unset($this->controllerListener, $this->attributeHandlerMock);
     }
 
-    /** @test */
-    public function noAttibuteToProcessTest(): void
+    #[Test]
+    public function noAttributeToProcessTest(): void
     {
         $this->request->headers->set(key: 'Accept', values: '*/*');
 
@@ -65,7 +66,7 @@ class ControllerListenerTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function oneAttributeToProcessTest(): void
     {
         $this->request->headers->set(key: 'Accept', values: '*/*');
@@ -79,7 +80,7 @@ class ControllerListenerTest extends TestCase
             HttpKernelInterface::MAIN_REQUEST
         );
 
-        $this->attributeHandlerMock->expects(static::once())->method('process')->with($event, $attribute);
+        $this->attributeHandlerMock->expects($this->once())->method('process')->with($event, $attribute);
 
         $this->controllerListener->onKernelController($event);
     }

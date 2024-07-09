@@ -23,7 +23,7 @@ class ArrayProcessor extends AbstractTypeCheckProcessor
 
         array_walk_recursive(
             $value,
-            function (&$data) {
+            static function (&$data) {
                 // Retrieve the initial type first then trim value and reset as original type
                 $type = gettype($data);
                 $data = trim((string) $data);

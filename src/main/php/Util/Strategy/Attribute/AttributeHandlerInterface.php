@@ -18,5 +18,9 @@ interface AttributeHandlerInterface
 {
     public function registerProcessor(AttributeProcessorInterface $attributeProcessor): self;
 
-    public function process(ControllerEvent $event, AttributeInterface $attribute): void;
+    public function process(
+        ControllerEvent $event,
+        AttributeInterface $attribute,
+        ?\ReflectionParameter $reflectionParameter = null
+    ): void;
 }

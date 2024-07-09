@@ -20,6 +20,7 @@ use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\AttributeHandlerInterfa
 use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor\FileParamProcessor;
 use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor\RouteProcessor;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\TypeCheckHandlerInterface;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -64,7 +65,7 @@ class AttributeHandlerTest extends TestCase
         parent::tearDown();
     }
 
-    /** @test */
+    #[Test]
     public function registerProcessorTest(): void
     {
         $reflectionClass = new \ReflectionClass(AttributeHandler::class);
@@ -88,7 +89,7 @@ class AttributeHandlerTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function processNoProcessorTest(): void
     {
         $exceptionDefinition = HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR;
@@ -100,7 +101,7 @@ class AttributeHandlerTest extends TestCase
         $attribute = new ItspireFrameworkExtra\Route(path: '/test', responseStatus: HttpResponseStatus::HTTP_OK);
 
         $this->loggerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('error')
             ->with(
                 vsprintf(
@@ -120,7 +121,7 @@ class AttributeHandlerTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function processRouteTest(): void
     {
         $this->attributeHandler->registerProcessor($this->routeProcessorMock);
@@ -134,13 +135,13 @@ class AttributeHandlerTest extends TestCase
 
         $attribute = new ItspireFrameworkExtra\Route(path: '/test', responseStatus: HttpResponseStatus::HTTP_OK);
 
-        $this->routeProcessorMock->expects(static::once())->method('supports')->with($attribute)->willReturn(true);
-        $this->routeProcessorMock->expects(static::once())->method('process')->with($event, $attribute);
+        $this->routeProcessorMock->expects($this->once())->method('supports')->with($attribute)->willReturn(true);
+        $this->routeProcessorMock->expects($this->once())->method('process')->with($event, $attribute);
 
         $this->attributeHandler->process($event, $attribute);
     }
 
-    /** @test */
+    #[Test]
     public function processFileParamTest(): void
     {
         $this->attributeHandler->registerProcessor($this->routeProcessorMock);
@@ -160,11 +161,11 @@ class AttributeHandlerTest extends TestCase
 
         $attribute = new ItspireFrameworkExtra\FileParam(name: 'param');
 
-        $this->routeProcessorMock->expects(static::once())->method('supports')->with($attribute)->willReturn(false);
+        $this->routeProcessorMock->expects($this->once())->method('supports')->with($attribute)->willReturn(false);
 
-        $this->fileParamProcessorMock->expects(static::once())->method('supports')->with($attribute)->willReturn(true);
+        $this->fileParamProcessorMock->expects($this->once())->method('supports')->with($attribute)->willReturn(true);
 
-        $this->fileParamProcessorMock->expects(static::once())->method('process')->with($event, $attribute);
+        $this->fileParamProcessorMock->expects($this->once())->method('process')->with($event, $attribute);
 
         $this->attributeHandler->process($event, $attribute);
     }

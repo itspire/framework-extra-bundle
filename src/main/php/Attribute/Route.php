@@ -12,9 +12,9 @@ namespace Itspire\FrameworkExtraBundle\Attribute;
 
 use Itspire\Common\Enum\Http\HttpMethod;
 use Itspire\Common\Enum\Http\HttpResponseStatus;
-use Symfony\Component\Routing\Annotation\Route as BaseRoute;
+use Symfony\Component\Routing\Attribute\Route as BaseRoute;
 
-#[\Attribute(\Attribute::IS_REPEATABLE | \Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD)]
+#[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD | \Attribute::IS_REPEATABLE)]
 class Route extends BaseRoute implements AttributeInterface
 {
     public function __construct(
@@ -24,7 +24,7 @@ class Route extends BaseRoute implements AttributeInterface
         array $options = [],
         array $defaults = [],
         ?string $host = null,
-        array|string $methods = [],
+        HttpMethod|array|string $methods = [],
         array|string $schemes = [],
         ?string $condition = null,
         ?int $priority = null,
@@ -33,10 +33,9 @@ class Route extends BaseRoute implements AttributeInterface
         bool $utf8 = null,
         bool $stateless = null,
         ?string $env = null,
-        private ?HttpResponseStatus $responseStatus = null
+        private readonly ?HttpResponseStatus $responseStatus = null
     ) {
         parent::__construct(
-            [],
             $path,
             $name,
             $requirements,
@@ -44,7 +43,7 @@ class Route extends BaseRoute implements AttributeInterface
             $defaults,
             $host,
             array_map(
-                fn (mixed $method): string => ($method instanceof HttpMethod) ? $method->value : $method,
+                static fn (mixed $method): string => ($method instanceof HttpMethod) ? $method->value : $method,
                 (array) $methods
             ),
             $schemes,

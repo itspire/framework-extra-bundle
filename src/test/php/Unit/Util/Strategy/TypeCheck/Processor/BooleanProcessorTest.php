@@ -14,6 +14,8 @@ use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
 use Itspire\Exception\Http\HttpException;
 use Itspire\FrameworkExtraBundle\Attribute\QueryParam;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\Processor\BooleanProcessor;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -36,7 +38,7 @@ class BooleanProcessorTest extends TestCase
         unset($this->booleanProcessor, $this->loggerMock);
     }
 
-    public function supportsProvider(): array
+    public static function supportsProvider(): array
     {
         return [
             'notSupported' => ['string', false],
@@ -45,16 +47,14 @@ class BooleanProcessorTest extends TestCase
         ];
     }
 
-    /**
-     * @test
-     * @dataProvider supportsProvider
-     */
+    #[Test]
+    #[DataProvider('supportsProvider')]
     public function supportsTest($type, $result): void
     {
         static::assertEquals(expected: $result, actual: $this->booleanProcessor->supports($type));
     }
 
-    /** @test */
+    #[Test]
     public function processUnsupportedTest(): void
     {
         $exceptionDefinition = HttpExceptionDefinition::HTTP_BAD_REQUEST;
@@ -67,7 +67,7 @@ class BooleanProcessorTest extends TestCase
         $request = new Request(attributes: ['_route' => 'test']);
 
         $this->loggerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('alert')
             ->with(
                 'Invalid value type string provided for parameter param on route test : expected one of bool, boolean.'
@@ -76,7 +76,7 @@ class BooleanProcessorTest extends TestCase
         $this->booleanProcessor->process($paramAttribute, $request, 'test');
     }
 
-    /** @test */
+    #[Test]
     public function processTest(): void
     {
         $paramAttribute = new QueryParam(name: 'param', type: 'boolean');

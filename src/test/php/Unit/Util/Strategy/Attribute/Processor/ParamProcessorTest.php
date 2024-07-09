@@ -17,6 +17,7 @@ use Itspire\FrameworkExtraBundle\Attribute\QueryParam;
 use Itspire\FrameworkExtraBundle\Tests\Unit\Fixtures\FixtureController;
 use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor\QueryParamProcessor;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\TypeCheckHandlerInterface;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -43,7 +44,7 @@ class ParamProcessorTest extends TestCase
         unset($this->queryParamProcessor, $this->typeCheckHandlerMock, $this->loggerMock);
     }
 
-    /** @test */
+    #[Test]
     public function processUnsupportedClassTest(): void
     {
         $exceptionDefinition = HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR;
@@ -55,7 +56,7 @@ class ParamProcessorTest extends TestCase
         $consumes = $this->getConsumes();
 
         $this->loggerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('error')
             ->with(
                 vsprintf(
@@ -75,7 +76,7 @@ class ParamProcessorTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function processSupportedClassWithParameterNameConflictTest(): void
     {
         $exceptionDefinition = HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR;
@@ -89,7 +90,7 @@ class ParamProcessorTest extends TestCase
         $request = new Request(attributes: ['param' => 'test']);
 
         $this->loggerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('error')
             ->with(
                 vsprintf(
@@ -109,7 +110,7 @@ class ParamProcessorTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function processSupportedClassWithParameterNotDefinedOnMethodTest(): void
     {
         $exceptionDefinition = HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR;
@@ -123,7 +124,7 @@ class ParamProcessorTest extends TestCase
         $reflectionMethod = new \ReflectionMethod(FixtureController::class, method: 'fixture');
 
         $this->loggerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('error')
             ->with(
                 vsprintf(
@@ -146,7 +147,7 @@ class ParamProcessorTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function processSupportedClassWithMissingRequiredParameterTest(): void
     {
         $exceptionDefinition = HttpExceptionDefinition::HTTP_BAD_REQUEST;
@@ -159,7 +160,7 @@ class ParamProcessorTest extends TestCase
         $request = new Request();
 
         $this->loggerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('alert')
             ->with(
                 vsprintf(
@@ -179,7 +180,7 @@ class ParamProcessorTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function processSupportedClassWithTypeCheckErrorTest(): void
     {
         $exceptionDefinition = HttpExceptionDefinition::HTTP_BAD_REQUEST;
@@ -192,7 +193,7 @@ class ParamProcessorTest extends TestCase
         $request = new Request(query: ['param' => 1]);
 
         $this->typeCheckHandlerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('process')
             ->with($queryParam, $request, 1)
             ->willThrowException(new HttpException($exceptionDefinition));
@@ -208,7 +209,7 @@ class ParamProcessorTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function processSupportedClassWithOverriddenTypeCheckErrorTest(): void
     {
         $exceptionDefinition = HttpExceptionDefinition::HTTP_BAD_REQUEST;
@@ -221,7 +222,7 @@ class ParamProcessorTest extends TestCase
         $request = new Request(query: ['param' => '1']);
 
         $this->typeCheckHandlerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('process')
             ->with($queryParam, $request, '1')
             ->willThrowException(new HttpException($exceptionDefinition));
@@ -237,7 +238,7 @@ class ParamProcessorTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function processSupportedClassWithRequirementsErrorTest(): void
     {
         $exceptionDefinition = HttpExceptionDefinition::HTTP_BAD_REQUEST;
@@ -250,18 +251,18 @@ class ParamProcessorTest extends TestCase
         $request = new Request(query: ['param' => '1']);
 
         $this->typeCheckHandlerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('process')
             ->with($queryParam, $request, '1')
             ->willReturn('1');
 
         $this->loggerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('alert')
             ->with(
                 vsprintf(
                     format: 'Parameter value for %s does not match defined requirement %s.',
-                    values: [$queryParam->getName(), $queryParam->getRequirements()]
+                    values: [$queryParam->name, $queryParam->requirements]
                 )
             );
 
@@ -276,7 +277,7 @@ class ParamProcessorTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function processSupportedClassWithArrayRequirementsErrorTest(): void
     {
         $exceptionDefinition = HttpExceptionDefinition::HTTP_BAD_REQUEST;
@@ -289,18 +290,18 @@ class ParamProcessorTest extends TestCase
         $request = new Request(query: ['param' => [1]]);
 
         $this->typeCheckHandlerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('process')
             ->with($queryParam, $request, [1])
             ->willReturn([1]);
 
         $this->loggerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('alert')
             ->with(
                 vsprintf(
                     format: 'Parameter value for %s does not match defined requirement %s.',
-                    values: [$queryParam->getName(), $queryParam->getRequirements()]
+                    values: [$queryParam->name, $queryParam->requirements]
                 )
             );
 

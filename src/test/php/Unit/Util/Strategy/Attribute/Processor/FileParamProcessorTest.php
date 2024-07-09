@@ -15,6 +15,8 @@ use Itspire\FrameworkExtraBundle\Attribute\FileParam;
 use Itspire\FrameworkExtraBundle\Tests\Unit\Fixtures\FixtureController;
 use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor\FileParamProcessor;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\TypeCheckHandlerInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -39,7 +41,7 @@ class FileParamProcessorTest extends TestCase
         unset($this->fileParamProcessor);
     }
 
-    public function supportsProvider(): array
+    public static function supportsProvider(): array
     {
         return [
             'notSupported' => [new Consumes(), false],
@@ -47,16 +49,14 @@ class FileParamProcessorTest extends TestCase
         ];
     }
 
-    /**
-     * @test
-     * @dataProvider supportsProvider
-     */
+    #[Test]
+    #[DataProvider('supportsProvider')]
     public function supportsTest($attribute, $result): void
     {
         static::assertEquals(expected: $result, actual: $this->fileParamProcessor->supports($attribute));
     }
 
-    /** @test */
+    #[Test]
     public function processTest(): void
     {
         $file = new UploadedFile(

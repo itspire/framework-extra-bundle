@@ -19,6 +19,8 @@ use Itspire\FrameworkExtraBundle\Configuration\CustomRequestAttributes;
 use Itspire\FrameworkExtraBundle\Tests\Unit\Fixtures\FixtureController;
 use Itspire\FrameworkExtraBundle\Util\MimeTypeMatcherInterface;
 use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor\ConsumesProcessor;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -45,7 +47,7 @@ class ConsumesProcessorTest extends TestCase
         unset($this->mimeTypeMatcherMock, $this->loggerMock, $this->consumesProcessor);
     }
 
-    public function supportsProvider(): array
+    public static function supportsProvider(): array
     {
         return [
             'notSupported' => [new BodyParam(name: 'param'), false],
@@ -53,16 +55,22 @@ class ConsumesProcessorTest extends TestCase
         ];
     }
 
-    /**
-     * @test
-     * @dataProvider supportsProvider
-     */
+    public static function mimeTypeProvider(): array
+    {
+        return [
+            'enumValue' => [MimeType::APPLICATION_XML],
+            'rawValue' => [MimeType::APPLICATION_XML->value]
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('supportsProvider')]
     public function supportsTest($attribute, $result): void
     {
         static::assertEquals(expected: $result, actual: $this->consumesProcessor->supports($attribute));
     }
 
-    /** @test */
+    #[Test]
     public function processAlreadyProcessedTest(): void
     {
         $exceptionDefinition = HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR;
@@ -77,7 +85,7 @@ class ConsumesProcessorTest extends TestCase
         $reflectionMethod = new \ReflectionMethod(FixtureController::class, 'param');
 
         $this->loggerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('error')
             ->with(
                 vsprintf(
@@ -101,7 +109,7 @@ class ConsumesProcessorTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function processUnsupportedMediaTypeTest(): void
     {
         $exceptionDefinition = HttpExceptionDefinition::HTTP_UNSUPPORTED_MEDIA_TYPE;
@@ -115,13 +123,13 @@ class ConsumesProcessorTest extends TestCase
         $request = new Request(server: ['CONTENT_TYPE' => MimeType::TEXT_HTML->value]);
 
         $this->mimeTypeMatcherMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('findMimeTypeMatch')
             ->with([$request->headers->get(key: 'Content-Type')], $consumes->getConsumableContentTypes())
             ->willReturn(null);
 
         $this->loggerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('alert')
             ->with(
                 vsprintf(
@@ -141,18 +149,8 @@ class ConsumesProcessorTest extends TestCase
         );
     }
 
-    public function mimeTypeProvider(): array
-    {
-        return [
-            'enumValue' => [MimeType::APPLICATION_XML],
-            'rawValue' => [MimeType::APPLICATION_XML->value]
-        ];
-    }
-
-    /**
-     * @test
-     * @dataProvider mimeTypeProvider
-     */
+    #[Test]
+    #[DataProvider('mimeTypeProvider')]
     public function processTest(MimeType | string $mimeTypeValue): void
     {
         $consumes = $this->getConsumes([$mimeTypeValue], ['Default', 'extended']);
@@ -160,7 +158,7 @@ class ConsumesProcessorTest extends TestCase
         $request = new Request(server: ['CONTENT_TYPE' => MimeType::APPLICATION_XML->value]);
 
         $this->mimeTypeMatcherMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('findMimeTypeMatch')
             ->with([$request->headers->get(key: 'Content-Type')], $consumes->getConsumableContentTypes())
             ->willReturn(MimeType::APPLICATION_XML->value);

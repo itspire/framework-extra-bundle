@@ -31,8 +31,11 @@ class ViewListener extends AbstractTemplateRendererListener
 {
     private const HANDLED_MIME_TYPES = [MimeType::TEXT_HTML, MimeType::APPLICATION_XML, MimeType::APPLICATION_JSON];
 
-    public function __construct(private SerializerInterface $serializer, LoggerInterface $logger, Environment $twig)
-    {
+    public function __construct(
+        private readonly SerializerInterface $serializer,
+        LoggerInterface $logger,
+        Environment $twig
+    ) {
         parent::__construct($logger, twig: $twig);
     }
 
@@ -71,7 +74,10 @@ class ViewListener extends AbstractTemplateRendererListener
                         null !== $responseContentType
                         && in_array(
                             needle: $responseContentType,
-                            haystack: array_map(fn (MimeType $mimeType) => $mimeType->value, self::HANDLED_MIME_TYPES),
+                            haystack: array_map(
+                                static fn(MimeType $mimeType) => $mimeType->value,
+                                self::HANDLED_MIME_TYPES
+                            ),
                             strict: true
                         )
                     ) {

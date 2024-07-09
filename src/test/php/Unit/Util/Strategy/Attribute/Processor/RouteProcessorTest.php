@@ -18,6 +18,8 @@ use Itspire\FrameworkExtraBundle\Attribute\Route;
 use Itspire\FrameworkExtraBundle\Configuration\CustomRequestAttributes;
 use Itspire\FrameworkExtraBundle\Tests\Unit\Fixtures\FixtureController;
 use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor\RouteProcessor;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -42,7 +44,7 @@ class RouteProcessorTest extends TestCase
         unset($this->routeProcessor, $this->loggerMock);
     }
 
-    public function supportsProvider(): array
+    public static function supportsProvider(): array
     {
         return [
             'notSupported' => [new Consumes([]), false],
@@ -50,16 +52,14 @@ class RouteProcessorTest extends TestCase
         ];
     }
 
-    /**
-     * @test
-     * @dataProvider supportsProvider
-     */
+    #[Test]
+    #[DataProvider('supportsProvider')]
     public function supportsTest($attribute, $result): void
     {
         static::assertEquals(expected: $result, actual: $this->routeProcessor->supports($attribute));
     }
 
-    /** @test */
+    #[Test]
     public function processErrorTest(): void
     {
         $exceptionDefinition = HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR;
@@ -71,7 +71,7 @@ class RouteProcessorTest extends TestCase
         $consumes = $this->getConsumes();
 
         $this->loggerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('error')
             ->with(
                 vsprintf(
@@ -91,7 +91,7 @@ class RouteProcessorTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function processTest(): void
     {
         $request = new Request();

@@ -23,8 +23,11 @@ class RouteProcessor extends AbstractAttributeProcessor
     }
 
     /** @param Route $attribute */
-    protected function handleProcess(ControllerEvent $event, AttributeInterface $attribute): void
-    {
+    protected function handleProcess(
+        ControllerEvent $event,
+        AttributeInterface $attribute,
+        ?\ReflectionParameter $reflectionParameter = null
+    ): void {
         $request = $event->getRequest();
         $request->attributes->set(key: CustomRequestAttributes::ROUTE_CALLED, value: true);
 

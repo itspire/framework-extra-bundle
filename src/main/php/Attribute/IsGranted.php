@@ -10,19 +10,21 @@ declare(strict_types=1);
 
 namespace Itspire\FrameworkExtraBundle\Attribute;
 
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted as BaseIsGranted;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted as SensioIsGranted;
+use Symfony\Component\Security\Http\Attribute\IsGranted as SymfonyIsGranted;
 
-#[\Attribute(\Attribute::IS_REPEATABLE | \Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD)]
-class IsGranted extends BaseIsGranted implements AttributeInterface
+/** @deprecated Use {@see SymfonyIsGranted} instead */
+#[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD | \Attribute::IS_REPEATABLE)]
+class IsGranted extends SensioIsGranted implements AttributeInterface
 {
     public function __construct(
-        array | string | \UnitEnum $data = [],
+        array | string | \BackedEnum $data = [],
         $subject = null,
         string $message = null,
         ?int $statusCode = null
     ) {
         parent::__construct(
-            $data instanceof \UnitEnum ? $data->name : $data,
+            $data instanceof \BackedEnum ? $data->value : $data,
             $subject,
             $message,
             $statusCode

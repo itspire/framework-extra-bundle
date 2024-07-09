@@ -10,7 +10,7 @@ declare(strict_types=1);
 
 namespace Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck;
 
-use Itspire\FrameworkExtraBundle\Attribute\ParamAttributeInterface;
+use Itspire\FrameworkExtraBundle\Attribute\AbstractParamAttribute;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\Processor\TypeCheckProcessorInterface;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -18,5 +18,5 @@ interface TypeCheckHandlerInterface
 {
     public function registerProcessor(TypeCheckProcessorInterface $typeCheckProcessor): self;
 
-    public function process(ParamAttributeInterface $paramAttribute, Request $request, mixed $value): mixed;
+    public function process(AbstractParamAttribute $paramAttribute, Request $request, mixed $value): mixed;
 }

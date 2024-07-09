@@ -18,6 +18,7 @@ use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\Processor\StringProcess
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\Processor\TypeCheckProcessorInterface;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\TypeCheckHandler;
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\TypeCheckHandlerInterface;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -53,7 +54,7 @@ class TypeCheckHandlerTest extends TestCase
         unset($this->typeCheckHandler, $this->loggerMock, $this->integerProcessorMock, $this->stringProcessorMock);
     }
 
-    /** @test */
+    #[Test]
     public function registerProcessorTest(): void
     {
         $reflectionClass = new \ReflectionClass(TypeCheckHandler::class);
@@ -72,7 +73,7 @@ class TypeCheckHandlerTest extends TestCase
         static::assertCount(expectedCount: 2, haystack: $reflectionProperty->getValue($this->typeCheckHandler));
     }
 
-    /** @test */
+    #[Test]
     public function processNoProcessorTest(): void
     {
         $exceptionDefinition = HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR;
@@ -82,7 +83,7 @@ class TypeCheckHandlerTest extends TestCase
         $this->expectExceptionMessage($exceptionDefinition->getDescription());
 
         $this->loggerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('error')
             ->with('No processor found to check expected value type "int" for param "param" on route "test".');
 
@@ -95,7 +96,7 @@ class TypeCheckHandlerTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function processNoValidProcessorTest(): void
     {
         $exceptionDefinition = HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR;
@@ -107,13 +108,13 @@ class TypeCheckHandlerTest extends TestCase
         $paramAttribute = new QueryParam(name: 'param', type: 'string');
 
         $this->integerProcessorMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('supports')
             ->with('string')
             ->willReturn(false);
 
         $this->loggerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('error')
             ->with('No processor found to check expected value type "string" for param "param" on route "test".');
 
@@ -124,7 +125,7 @@ class TypeCheckHandlerTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function processNoTypeValidationRequiredTest(): void
     {
         $paramAttribute = new QueryParam(name: 'param');
@@ -139,16 +140,16 @@ class TypeCheckHandlerTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function processTest(): void
     {
         $paramAttribute = new QueryParam(name: 'param', type: 'int');
         $request = new Request(attributes: ['_route' => 'test']);
 
-        $this->integerProcessorMock->expects(static::once())->method('supports')->with('int')->willReturn(true);
+        $this->integerProcessorMock->expects($this->once())->method('supports')->with('int')->willReturn(true);
 
         $this->integerProcessorMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('process')
             ->with($paramAttribute, $request, 1)
             ->willReturn(1);

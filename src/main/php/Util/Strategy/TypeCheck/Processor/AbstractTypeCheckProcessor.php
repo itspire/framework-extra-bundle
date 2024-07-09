@@ -18,7 +18,7 @@ use Symfony\Component\HttpFoundation\Request;
 
 abstract class AbstractTypeCheckProcessor implements TypeCheckProcessorInterface
 {
-    public function __construct(protected LoggerInterface $logger)
+    public function __construct(protected readonly LoggerInterface $logger)
     {
     }
 
@@ -38,7 +38,7 @@ abstract class AbstractTypeCheckProcessor implements TypeCheckProcessorInterface
                 format: 'Invalid value type %s provided for parameter %s on route %s : expected one of %s.',
                 values: [
                     gettype($value),
-                    $paramAttribute->getName(),
+                    $paramAttribute->name,
                     $request->attributes->get(key: '_route'),
                     $expectedTypes,
                 ]

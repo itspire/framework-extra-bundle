@@ -22,6 +22,8 @@ use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor\BodyParamProc
 use Itspire\FrameworkExtraBundle\Util\Strategy\TypeCheck\TypeCheckHandlerInterface;
 use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\SerializerInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -54,7 +56,7 @@ class BodyParamProcessorTest extends TestCase
         unset($this->bodyParamProcessor, $this->loggerMock, $this->serializerMock, $this->typeCheckHandlerMock);
     }
 
-    public function supportsProvider(): array
+    public static function supportsProvider(): array
     {
         return [
             'notSupported' => [new Consumes(), false],
@@ -62,16 +64,14 @@ class BodyParamProcessorTest extends TestCase
         ];
     }
 
-    /**
-     * @test
-     * @dataProvider supportsProvider
-     */
+    #[Test]
+    #[DataProvider('supportsProvider')]
     public function supportsTest($attribute, $result): void
     {
         static::assertEquals(expected: $result, actual: $this->bodyParamProcessor->supports($attribute));
     }
 
-    /** @test */
+    #[Test]
     public function processAlreadyProcessedTest(): void
     {
         $exceptionDefinition = HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR;
@@ -87,7 +87,7 @@ class BodyParamProcessorTest extends TestCase
         $reflectionMethod = new \ReflectionMethod(FixtureController::class, 'param');
 
         $this->loggerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('error')
             ->with(
                 vsprintf(
@@ -111,7 +111,7 @@ class BodyParamProcessorTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function processUnsupportedMediaTypeTest(): void
     {
         $exceptionDefinition = HttpExceptionDefinition::HTTP_UNSUPPORTED_MEDIA_TYPE;
@@ -123,7 +123,7 @@ class BodyParamProcessorTest extends TestCase
         $request = new Request(server: ['CONTENT_TYPE' => MimeType::TEXT_HTML->value], content: 'body');
 
         $this->loggerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('alert')
             ->with(
                 vsprintf(
@@ -143,7 +143,7 @@ class BodyParamProcessorTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function processNoValueTest(): void
     {
         $exceptionDefinition = HttpExceptionDefinition::HTTP_BAD_REQUEST;
@@ -159,7 +159,7 @@ class BodyParamProcessorTest extends TestCase
         );
 
         $this->loggerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('alert')
             ->with(
                 vsprintf(
@@ -179,7 +179,7 @@ class BodyParamProcessorTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function processDeserializationErrorTest(): void
     {
         $exceptionDefinition = HttpExceptionDefinition::HTTP_BAD_REQUEST;
@@ -199,23 +199,23 @@ class BodyParamProcessorTest extends TestCase
         );
 
         $this->serializerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('deserialize')
             ->with(
                 $xml,
                 TestObject::class,
-                $request->getContentType(),
+                $request->getContentTypeFormat(),
                 static::isInstanceOf(DeserializationContext::class)
             )
             ->willThrowException(new \Exception());
 
         $this->loggerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('alert')
             ->with(
                 vsprintf(
                     format: 'Deserialization to parameter "%s" of type "%s" failed.',
-                    values: [$bodyParam->getName(), $bodyParam->getType()]
+                    values: [$bodyParam->name, $bodyParam->type]
                 )
             );
 
@@ -230,7 +230,7 @@ class BodyParamProcessorTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function processTest(): void
     {
         $xml = '<testObject testProperty="test" testProperty2=2></testObject>';
@@ -247,12 +247,12 @@ class BodyParamProcessorTest extends TestCase
         $testObject = (new TestObject())->setTestProperty('test')->setTestProperty2(2);
 
         $this->serializerMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('deserialize')
             ->with(
                 $xml,
                 TestObject::class,
-                $request->getContentType(),
+                $request->getContentTypeFormat(),
                 static::isInstanceOf(DeserializationContext::class)
             )
             ->willReturn($testObject);

@@ -17,7 +17,7 @@ use Twig\Environment;
 
 abstract class AbstractTemplateRendererListener
 {
-    public function __construct(protected LoggerInterface $logger, private Environment $twig)
+    public function __construct(protected readonly LoggerInterface $logger, private readonly Environment $twig)
     {
     }
 

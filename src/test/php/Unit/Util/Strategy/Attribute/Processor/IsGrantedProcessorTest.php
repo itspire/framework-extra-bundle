@@ -16,6 +16,8 @@ use Itspire\FrameworkExtraBundle\Attribute\IsGranted;
 use Itspire\FrameworkExtraBundle\Tests\Unit\Fixtures\FixtureController;
 use Itspire\FrameworkExtraBundle\Tests\Unit\Fixtures\FixturePermission;
 use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor\IsGrantedProcessor;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -40,7 +42,7 @@ class IsGrantedProcessorTest extends TestCase
         unset($this->isGrantedProcessor, $this->loggerMock);
     }
 
-    public function supportsProvider(): array
+    public static function supportsProvider(): array
     {
         return [
             'notSupported' => [new Consumes(), false],
@@ -48,16 +50,14 @@ class IsGrantedProcessorTest extends TestCase
         ];
     }
 
-    /**
-     * @test
-     * @dataProvider supportsProvider
-     */
+    #[Test]
+    #[DataProvider('supportsProvider')]
     public function supportsTest($attribute, $result): void
     {
         static::assertEquals(expected: $result, actual: $this->isGrantedProcessor->supports($attribute));
     }
 
-    /** @test */
+    #[Test]
     public function processTest(): void
     {
         $fixturePermission = FixturePermission::TEST;

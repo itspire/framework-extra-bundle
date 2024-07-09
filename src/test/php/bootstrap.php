@@ -13,3 +13,7 @@ if (!is_file($autoloadFile = 'vendor/autoload.php')) {
 }
 
 require $autoloadFile;
+
+use Symfony\Component\ErrorHandler\ErrorHandler;
+
+ErrorHandler::register(null, false);

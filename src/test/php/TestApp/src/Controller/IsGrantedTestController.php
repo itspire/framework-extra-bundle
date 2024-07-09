@@ -1,0 +1,40 @@
+<?php
+
+/*
+ * Copyright (c) 2016 - 2022 Itspire.
+ * This software is licensed under the BSD-3-Clause license. (see LICENSE.md for full license)
+ * All Right Reserved.
+ */
+
+declare(strict_types=1);
+
+namespace Itspire\FrameworkExtraBundle\Tests\TestApp\Controller;
+
+use Itspire\Common\Enum\Http\HttpMethod;
+use Itspire\Common\Enum\Http\HttpResponseStatus;
+use Itspire\Common\Enum\MimeType;
+use Itspire\Exception\Definition\Http\HttpExceptionDefinition;
+use Itspire\Exception\Definition\Webservice\WebserviceExceptionDefinition;
+use Itspire\Exception\Http\HttpException;
+use Itspire\Exception\Webservice\WebserviceException;
+use Itspire\FrameworkExtraBundle\Attribute as ItspireFrameworkExtra;
+use Itspire\FrameworkExtraBundle\Tests\TestApp\Enum\Role;
+use Itspire\FrameworkExtraBundle\Tests\TestApp\Model\TestObject;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\File;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+
+#[ItspireFrameworkExtra\Route(path: '/security/is-granted', methods: HttpMethod::GET)]
+#[ItspireFrameworkExtra\IsGranted(data: Role::ROLE_ADMIN)]
+class IsGrantedTestController extends AbstractController
+{
+    #[ItspireFrameworkExtra\Route(path: '', name: 'securityIsGrantedTest')]
+    public function isGrantedTest(): Response
+    {
+        return new Response('success', HttpResponseStatus::HTTP_OK->value);
+    }
+}

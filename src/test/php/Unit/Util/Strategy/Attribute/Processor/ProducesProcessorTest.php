@@ -19,6 +19,8 @@ use Itspire\FrameworkExtraBundle\Configuration\CustomRequestAttributes;
 use Itspire\FrameworkExtraBundle\Tests\Unit\Fixtures\FixtureController;
 use Itspire\FrameworkExtraBundle\Util\MimeTypeMatcherInterface;
 use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\Processor\ProducesProcessor;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -49,107 +51,15 @@ class ProducesProcessorTest extends TestCase
         parent::tearDown();
     }
 
-    public function supportsProvider(): array
+    public static function supportsProvider(): array
     {
         return [
-            'notSupported' => [$this->getBodyParam(), false],
-            'supported' => [$this->getProduces(), true],
+            'notSupported' => [new BodyParam(name: 'param'), false],
+            'supported' => [new Produces(), true],
         ];
     }
 
-    /**
-     * @test
-     * @dataProvider supportsProvider
-     */
-    public function supportsTest($attribute, $result): void
-    {
-        static::assertEquals(expected: $result, actual: $this->producesProcessor->supports($attribute));
-    }
-
-    /** @test */
-    public function processAlreadyProcessedTest(): void
-    {
-        $exceptionDefinition = HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR;
-
-        $this->expectException(HttpException::class);
-        $this->expectExceptionCode($exceptionDefinition->value);
-        $this->expectExceptionMessage($exceptionDefinition->getDescription());
-
-        $produces = $this->getProduces([MimeType::APPLICATION_XML]);
-
-        $request = new Request(attributes: [CustomRequestAttributes::PRODUCES_PROCESSED => true]);
-
-        $reflectionMethod = new \ReflectionMethod(FixtureController::class, 'param');
-
-        $this->loggerMock
-            ->expects(static::once())
-            ->method('error')
-            ->with(
-                vsprintf(
-                    format: 'Duplicate usage of "%s" found on "%s::%s".',
-                    values: [
-                        $produces::class,
-                        $reflectionMethod->getDeclaringClass()->getName(),
-                        $reflectionMethod->getName(),
-                    ]
-                )
-            );
-
-        $this->producesProcessor->process(
-            new ControllerEvent(
-                $this->getMockBuilder(HttpKernelInterface::class)->getMock(),
-                [new FixtureController(), 'param'],
-                $request,
-                HttpKernelInterface::MAIN_REQUEST
-            ),
-            $produces
-        );
-    }
-
-    /** @test */
-    public function processUnsupportedMediaTypeTest(): void
-    {
-        $exceptionDefinition = HttpExceptionDefinition::HTTP_NOT_ACCEPTABLE;
-
-        $this->expectException(HttpException::class);
-        $this->expectExceptionCode($exceptionDefinition->value);
-        $this->expectExceptionMessage($exceptionDefinition->getDescription());
-
-        $produces = $this->getProduces([MimeType::APPLICATION_XML]);
-
-        $request = new Request(server: ['HTTP_ACCEPT' => MimeType::TEXT_HTML->value]);
-
-        $this->mimeTypeMatcherMock
-            ->expects(static::once())
-            ->method('findMimeTypeMatch')
-            ->with($request->getAcceptableContentTypes(), [MimeType::APPLICATION_XML->value])
-            ->willReturn(null);
-
-        $this->loggerMock
-            ->expects(static::once())
-            ->method('alert')
-            ->with(
-                vsprintf(
-                    format: 'Unsupported Media Type(s) used for acceptable response content type in route %s (%s).',
-                    values: [
-                        $request->attributes->get(key: '_route'),
-                        implode(separator: ', ', array: $request->getAcceptableContentTypes()),
-                    ]
-                )
-            );
-
-        $this->producesProcessor->process(
-            new ControllerEvent(
-                $this->getMockBuilder(HttpKernelInterface::class)->getMock(),
-                [new FixtureController(), 'param'],
-                $request,
-                HttpKernelInterface::MAIN_REQUEST
-            ),
-            $produces
-        );
-    }
-
-    public function processProvider(): array
+    public static function processProvider(): array
     {
         return [
             'xmlWithHtmlNotAcceptable' => [
@@ -174,10 +84,98 @@ class ProducesProcessorTest extends TestCase
         ];
     }
 
-    /**
-     * @test
-     * @dataProvider processProvider
-     */
+    #[Test]
+    #[DataProvider('supportsProvider')]
+    public function supportsTest($attribute, $result): void
+    {
+        static::assertEquals(expected: $result, actual: $this->producesProcessor->supports($attribute));
+    }
+
+    #[Test]
+    public function processAlreadyProcessedTest(): void
+    {
+        $exceptionDefinition = HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR;
+
+        $this->expectException(HttpException::class);
+        $this->expectExceptionCode($exceptionDefinition->value);
+        $this->expectExceptionMessage($exceptionDefinition->getDescription());
+
+        $produces = $this->getProduces([MimeType::APPLICATION_XML]);
+
+        $request = new Request(attributes: [CustomRequestAttributes::PRODUCES_PROCESSED => true]);
+
+        $reflectionMethod = new \ReflectionMethod(FixtureController::class, 'param');
+
+        $this->loggerMock
+            ->expects($this->once())
+            ->method('error')
+            ->with(
+                vsprintf(
+                    format: 'Duplicate usage of "%s" found on "%s::%s".',
+                    values: [
+                        $produces::class,
+                        $reflectionMethod->getDeclaringClass()->getName(),
+                        $reflectionMethod->getName(),
+                    ]
+                )
+            );
+
+        $this->producesProcessor->process(
+            new ControllerEvent(
+                $this->getMockBuilder(HttpKernelInterface::class)->getMock(),
+                [new FixtureController(), 'param'],
+                $request,
+                HttpKernelInterface::MAIN_REQUEST
+            ),
+            $produces
+        );
+    }
+
+    #[Test]
+    public function processUnsupportedMediaTypeTest(): void
+    {
+        $exceptionDefinition = HttpExceptionDefinition::HTTP_NOT_ACCEPTABLE;
+
+        $this->expectException(HttpException::class);
+        $this->expectExceptionCode($exceptionDefinition->value);
+        $this->expectExceptionMessage($exceptionDefinition->getDescription());
+
+        $produces = $this->getProduces([MimeType::APPLICATION_XML]);
+
+        $request = new Request(server: ['HTTP_ACCEPT' => MimeType::TEXT_HTML->value]);
+
+        $this->mimeTypeMatcherMock
+            ->expects($this->once())
+            ->method('findMimeTypeMatch')
+            ->with($request->getAcceptableContentTypes(), [MimeType::APPLICATION_XML->value])
+            ->willReturn(null);
+
+        $this->loggerMock
+            ->expects($this->once())
+            ->method('alert')
+            ->with(
+                vsprintf(
+                    format: 'Unsupported Media Type(s) used for acceptable response content type in route %s (%s).',
+                    values: [
+                        $request->attributes->get(key: '_route'),
+                        implode(separator: ', ', array: $request->getAcceptableContentTypes()),
+                    ]
+                )
+            );
+
+        $this->producesProcessor->process(
+            new ControllerEvent(
+                $this->getMockBuilder(HttpKernelInterface::class)->getMock(),
+                [new FixtureController(), 'param'],
+                $request,
+                HttpKernelInterface::MAIN_REQUEST
+            ),
+            $produces
+        );
+    }
+
+    #[Test]
+    #[DataProvider('processProvider')]
     public function processTest(
         bool $isHtmlAcceptable,
         string $requestAccept,
@@ -192,7 +190,7 @@ class ProducesProcessorTest extends TestCase
         );
 
         $this->mimeTypeMatcherMock
-            ->expects(static::once())
+            ->expects($this->once())
             ->method('findMimeTypeMatch')
             ->with($request->getAcceptableContentTypes(), $acceptableFormats)
             ->willReturn($requestAccept);

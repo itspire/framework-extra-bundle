@@ -32,7 +32,6 @@ class Kernel extends BaseKernel
         return sys_get_temp_dir() . '/itspire/framework-extra-bundle/var/' . $this->environment . '/log';
     }
 
-    /** @noinspection PhpUnusedPrivateMethodInspection */
     private function getConfigDir(): string
     {
         return $this->getProjectDir() . '/src/test/php/TestApp/config';

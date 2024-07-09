@@ -15,7 +15,11 @@ use Symfony\Component\HttpKernel\Event\ControllerEvent;
 
 interface AttributeProcessorInterface
 {
-    public function process(ControllerEvent $event, AttributeInterface $attribute): void;
+    public function process(
+        ControllerEvent $event,
+        AttributeInterface $attribute,
+        ?\ReflectionParameter $reflectionParameter = null
+    ): void;
 
     public function supports(AttributeInterface $attribute): bool;
 }

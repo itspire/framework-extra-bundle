@@ -10,10 +10,10 @@ declare(strict_types=1);
 
 namespace Itspire\FrameworkExtraBundle\Attribute;
 
-#[\Attribute(\Attribute::IS_REPEATABLE | \Attribute::TARGET_METHOD)]
+#[\Attribute(\Attribute::TARGET_METHOD | \Attribute::TARGET_PARAMETER | \Attribute::IS_REPEATABLE)]
 class FileParam extends AbstractParamAttribute
 {
-    public function __construct(string $name, bool $required = true, ?string $requirements = null)
+    public function __construct(?string $name = null, bool $required = true, ?string $requirements = null)
     {
         parent::__construct($name, 'file', $required, $requirements);
     }

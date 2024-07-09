@@ -10,7 +10,10 @@ declare(strict_types=1);
 
 namespace Itspire\FrameworkExtraBundle\Attribute;
 
-#[\Attribute(\Attribute::IS_REPEATABLE | \Attribute::TARGET_METHOD)]
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+
+/** @deprecated Use {@see MapRequestPayload} instead */
+#[\Attribute(\Attribute::TARGET_METHOD | \Attribute::TARGET_PARAMETER | \Attribute::IS_REPEATABLE)]
 class RequestParam extends AbstractParamAttribute
 {
 }

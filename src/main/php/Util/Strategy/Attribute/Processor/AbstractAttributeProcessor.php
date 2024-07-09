@@ -19,12 +19,15 @@ use Symfony\Component\HttpKernel\Event\ControllerEvent;
 
 abstract class AbstractAttributeProcessor implements AttributeProcessorInterface
 {
-    public function __construct(protected LoggerInterface $logger)
+    public function __construct(protected readonly LoggerInterface $logger)
     {
     }
 
-    public function process(ControllerEvent $event, AttributeInterface $attribute): void
-    {
+    public function process(
+        ControllerEvent $event,
+        AttributeInterface $attribute,
+        ?\ReflectionParameter $reflectionParameter = null
+    ): void {
         if (false === $this->supports($attribute)) {
             $this->logger->error(
                 vsprintf(
@@ -36,10 +39,14 @@ abstract class AbstractAttributeProcessor implements AttributeProcessorInterface
             throw new HttpException(HttpExceptionDefinition::HTTP_INTERNAL_SERVER_ERROR);
         }
 
-        $this->handleProcess($event, $attribute);
+        $this->handleProcess($event, $attribute, $reflectionParameter);
     }
 
-    abstract protected function handleProcess(ControllerEvent $event, AttributeInterface $attribute): void;
+    abstract protected function handleProcess(
+        ControllerEvent $event,
+        AttributeInterface $attribute,
+        ?\ReflectionParameter $reflectionParameter = null
+    ): void;
 
     protected function checkAlreadyProcessed(
         AttributeInterface $attribute,

@@ -11,13 +11,14 @@ declare(strict_types=1);
 namespace Itspire\FrameworkExtraBundle\Tests\Unit\DependencyInjection;
 
 use Itspire\FrameworkExtraBundle\DependencyInjection\Configuration;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Config\Definition\Processor;
 
 class ConfigurationTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function getConfigTreeBuilderWithInvalidAllowHtmlResponseContentTypeTest(): void
     {
         $this->expectException(InvalidConfigurationException::class);
@@ -31,7 +32,7 @@ class ConfigurationTest extends TestCase
         (new Processor())->processConfiguration(new Configuration(), $configs);
     }
 
-    /** @test */
+    #[Test]
     public function getConfigTreeBuilderWithAllowedHtmlResponseContentTypeTest(): void
     {
         $configs = [
@@ -45,7 +46,7 @@ class ConfigurationTest extends TestCase
         static::assertTrue(condition: $processedConfig['allow_html_response_content_type']);
     }
 
-    /** @test */
+    #[Test]
     public function getConfigTreeBuilderWithDisallowedHtmlResponseContentTypeTest(): void
     {
         $configs = [

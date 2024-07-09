@@ -13,12 +13,19 @@ namespace Itspire\FrameworkExtraBundle\Attribute;
 use Itspire\Common\Enum\MimeType;
 use JMS\Serializer\Exclusion\GroupsExclusionStrategy;
 
-#[\Attribute(\Attribute::TARGET_METHOD)]
+#[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD)]
 class Produces implements AttributeInterface
 {
+    /** @var string[] */
     private array $acceptableFormats = [];
+
+    /** @var string[] */
     private array $serializationGroups = [GroupsExclusionStrategy::DEFAULT_GROUP];
 
+    /**
+     * @param string|string[]|MimeType|MimeType[] $acceptableFormats
+     * @param string|string[] $serializationGroups
+     */
     public function __construct(
         mixed $acceptableFormats = [],
         mixed $serializationGroups = []
@@ -46,7 +53,7 @@ class Produces implements AttributeInterface
 
         if (!empty($acceptableFormats)) {
             $this->acceptableFormats = array_map(
-                fn (mixed $acceptableFormat): string => $acceptableFormat instanceof MimeType
+                static fn (mixed $acceptableFormat): string => $acceptableFormat instanceof MimeType
                     ? $acceptableFormat->value
                     : $acceptableFormat,
                 $acceptableFormats

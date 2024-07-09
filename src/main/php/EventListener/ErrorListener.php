@@ -35,7 +35,7 @@ class ErrorListener extends AbstractTemplateRendererListener
     private array $exceptionApiAdapters = [];
 
     public function __construct(
-        private SerializerInterface $serializer,
+        private readonly SerializerInterface $serializer,
         LoggerInterface $logger,
         Environment $twig,
         iterable $exceptionApiMappers = [],
@@ -85,7 +85,7 @@ class ErrorListener extends AbstractTemplateRendererListener
                 && in_array(
                     $responseContentType,
                     array_map(
-                        fn (MimeType $mimeType) => $mimeType->value,
+                        static fn (MimeType $mimeType) => $mimeType->value,
                         [MimeType::TEXT_HTML, MimeType::APPLICATION_XML, MimeType::APPLICATION_JSON]
                     ),
                     true

@@ -21,7 +21,7 @@ use Symfony\Component\HttpKernel\Event\ControllerEvent;
 
 class ConsumesProcessor extends AbstractAttributeProcessor
 {
-    public function __construct(private MimeTypeMatcherInterface $mimeTypeMatcher, LoggerInterface $logger)
+    public function __construct(private readonly MimeTypeMatcherInterface $mimeTypeMatcher, LoggerInterface $logger)
     {
         parent::__construct($logger);
     }
@@ -31,8 +31,12 @@ class ConsumesProcessor extends AbstractAttributeProcessor
         return $attribute instanceof Consumes;
     }
 
-    protected function handleProcess(ControllerEvent $event, AttributeInterface $attribute): void
-    {
+    /** @param Consumes $attribute */
+    protected function handleProcess(
+        ControllerEvent $event,
+        AttributeInterface $attribute,
+        ?\ReflectionParameter $reflectionParameter = null
+    ): void {
         $request = $event->getRequest();
 
         $this->checkAlreadyProcessed(

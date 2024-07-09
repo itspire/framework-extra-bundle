@@ -13,19 +13,21 @@ namespace Itspire\FrameworkExtraBundle\Attribute;
 class AbstractParamAttribute implements ParamAttributeInterface
 {
     public function __construct(
-        protected ?string $name = null,
-        protected ?string $type = null,
-        protected bool $required = true,
-        protected ?string $requirements = null,
-        protected mixed $default = null
+        public ?string $name = null,
+        public ?string $type = null,
+        public bool $required = true,
+        public ?string $requirements = null,
+        public mixed $default = null
     ) {
     }
 
+    /** @deprecated Use "name" property directly. */
     public function getName(): ?string
     {
         return $this->name;
     }
 
+    /** @deprecated Use "type" property directly. */
     public function setType(string $type): static
     {
         $this->type = $type;
@@ -33,11 +35,13 @@ class AbstractParamAttribute implements ParamAttributeInterface
         return $this;
     }
 
+    /** @deprecated Use "type" property directly. */
     public function getType(): ?string
     {
         return $this->type;
     }
 
+    /** @deprecated Use "required" property directly. */
     public function setRequired(bool $required): static
     {
         $this->required = $required;
@@ -45,16 +49,19 @@ class AbstractParamAttribute implements ParamAttributeInterface
         return $this;
     }
 
+    /** @deprecated Use "required" property directly. */
     public function isRequired(): bool
     {
         return $this->required;
     }
 
+    /** @deprecated Use "requirements" property directly. */
     public function getRequirements(): ?string
     {
         return $this->requirements;
     }
 
+    /** @deprecated Use "default" property directly. */
     public function setDefault(mixed $default = null): static
     {
         $this->default = $default;
@@ -62,6 +69,7 @@ class AbstractParamAttribute implements ParamAttributeInterface
         return $this;
     }
 
+    /** @deprecated Use "default" property directly. */
     public function getDefault(): mixed
     {
         return $this->default;
