@@ -13,7 +13,6 @@ default:
         paths:
             - build
             - vendor
-            - phpunit.xml
     tags:
         - docker-build
 
