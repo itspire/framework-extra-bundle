@@ -73,7 +73,7 @@ class IsGrantedProcessorTest extends TestCase
             $attribute
         );
 
-        static::assertEquals(expected: $fixturePermission->value, actual: $attribute->getAttributes());
+        static::assertEquals(expected: $fixturePermission->name, actual: $attribute->getAttributes());
     }
 
     protected function getIsGranted(): IsGranted

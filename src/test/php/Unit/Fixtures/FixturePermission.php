@@ -17,5 +17,5 @@ enum FixturePermission: string implements ExtendedBackedEnumInterface
 {
     use ExtendedBackedEnumTrait;
 
-    case TEST = 'TEST';
+    case TEST = 'TEST_VAL';
 }

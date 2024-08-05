@@ -18,13 +18,13 @@ use Symfony\Component\Security\Http\Attribute\IsGranted as SymfonyIsGranted;
 class IsGranted extends SensioIsGranted implements AttributeInterface
 {
     public function __construct(
-        array | string | \BackedEnum $data = [],
+        array | string | \UnitEnum $data = [],
         $subject = null,
         string $message = null,
         ?int $statusCode = null
     ) {
         parent::__construct(
-            $data instanceof \BackedEnum ? $data->value : $data,
+            $data instanceof \UnitEnum ? $data->name : $data,
             $subject,
             $message,
             $statusCode

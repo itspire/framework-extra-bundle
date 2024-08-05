@@ -17,5 +17,5 @@ enum Role: string implements ExtendedBackedEnumInterface
 {
     use ExtendedBackedEnumTrait;
 
-    case ROLE_ADMIN = 'ROLE_ADMIN';
+    case ROLE_ADMIN = 'ROLE_ADMIN_VAL';
 }
