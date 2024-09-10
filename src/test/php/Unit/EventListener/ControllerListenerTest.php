@@ -54,7 +54,7 @@ class ControllerListenerTest extends TestCase
     {
         $this->request->headers->set(key: 'Accept', values: '*/*');
 
-        $this->attributeHandlerMock->expects(static::never())->method('process');
+        $this->attributeHandlerMock->expects($this->never())->method('process');
 
         $this->controllerListener->onKernelController(
             new ControllerEvent(

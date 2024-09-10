@@ -14,6 +14,7 @@ use Itspire\FrameworkExtraBundle\Attribute\AbstractParamAttribute;
 use Itspire\FrameworkExtraBundle\Attribute\AttributeInterface;
 use Itspire\FrameworkExtraBundle\Attribute\BodyParam;
 use Itspire\FrameworkExtraBundle\Attribute\ParamAttributeInterface;
+use Itspire\FrameworkExtraBundle\Attribute\Route;
 use Itspire\FrameworkExtraBundle\Util\Strategy\Attribute\AttributeHandlerInterface;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 
@@ -31,11 +32,32 @@ class ControllerListener
             $reflectionClass = new \ReflectionClass(get_class($controller[0]));
             $reflectionMethod = $reflectionClass->getMethod($controller[1]);
 
+            $reflectionClassAttributes = $reflectionClass->getAttributes();
+            $reflectionMethodAttributes = $reflectionMethod->getAttributes();
+
+            // Ensures each Route attribute is handled first and only once for the request
+            foreach ($reflectionClassAttributes as $key => $reflectionClassAttribute) {
+                if ($reflectionClassAttribute instanceof Route) {
+                    $this->processAttributes($event, [$reflectionClassAttribute]);
+
+                    unset($reflectionClassAttributes[$key]);
+                }
+            }
+
+            foreach ($reflectionMethodAttributes as $key => $reflectionMethodAttribute) {
+                if ($reflectionMethodAttribute instanceof Route) {
+                    $this->processAttributes($event, [$reflectionMethodAttribute]);
+
+                    unset($reflectionMethodAttributes[$key]);
+                }
+            }
+
+            $this->processAttributes($event, $reflectionClassAttributes);
+            $this->processAttributes($event, $reflectionMethodAttributes);
+
             foreach ($reflectionMethod->getParameters() as $reflectionParameter) {
                 $this->processAttributes($event, $reflectionParameter->getAttributes(), $reflectionParameter);
             }
-            $this->processAttributes($event, $reflectionMethod->getAttributes());
-            $this->processAttributes($event, $reflectionClass->getAttributes());
         }
     }
 
